@@ -34,7 +34,7 @@ function Sidebar() {
     >
       <Toolbar>
         <Typography variant="h6" noWrap>
-          Immobilienverwaltung
+          Hallo, Adrian!
         </Typography>
       </Toolbar>
       <List>

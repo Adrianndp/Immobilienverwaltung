@@ -9,8 +9,9 @@ export interface Mietobjekt {
   erstellt_am: string
   geaendert_am: string
   objekttyp_label: string
-
 }
+
+export type MietobjektInput = Pick<Mietobjekt, 'objekttyp' | 'strasse' | 'hausnummer' | 'plz' | 'stadt'>
 
 export interface Einheit {
   id: number

@@ -2,6 +2,7 @@ import Accordion from '@mui/material/Accordion'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import Alert from '@mui/material/Alert'
+import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -10,8 +11,11 @@ import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
+import AddIcon from '@mui/icons-material/Add'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import { useState } from 'react'
 import { useEinheiten, useMietobjekte } from '../api/hooks'
+import MietobjektDialog from '../components/MietobjektDialog'
 
 function formatFlaeche(value: string) {
   return `${Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2 })} m²`
@@ -53,11 +57,18 @@ function EinheitenTabelle({ mietobjektId }: { mietobjektId: number }) {
 }
 
 function Mietobjekte() {
-  const { data: mietobjekte, loading, error } = useMietobjekte()
+  const { data: mietobjekte, loading, error, reload } = useMietobjekte()
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h4">Meine Mietobjekte</Typography>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4">Meine Mietobjekte</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+          Mietobjekt hinzufügen
+        </Button>
+      </Stack>
+      <MietobjektDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreated={reload} />
 
       {loading && <CircularProgress />}
       {error && <Alert severity="error">Mietobjekte konnten nicht geladen werden.</Alert>}
@@ -70,7 +81,7 @@ function Mietobjekte() {
           <Accordion key={m.id} slotProps={{ transition: { unmountOnExit: true } }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Stack>
-                <Typography fontWeight={500}>
+                <Typography sx={{ fontWeight: 500 }}>
                   {m.strasse} {m.hausnummer}, {m.plz} {m.stadt}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

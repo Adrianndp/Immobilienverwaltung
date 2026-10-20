@@ -8,8 +8,8 @@ class MietobjektSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mietobjekt
         fields = [
-            "id", "objekttyp_label",
-            "strasse", "hausnummer", "plz",
+            "id", "objekttyp", "objekttyp_label",
+            "strasse", "hausnummer", "plz", "stadt", "land",
             "erstellt_am", "geaendert_am",
         ]
         read_only_fields = ["id", "erstellt_am", "geaendert_am"]

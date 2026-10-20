@@ -1,0 +1,5 @@
+*.pyc
+backend/.venv/
+*.sqlite3
+frontend/node_modules/
+.env

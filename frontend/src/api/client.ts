@@ -11,6 +11,10 @@ function getCookie(name: string): string | undefined {
 
 async function parseResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) return undefined as T
+  // Not logged in: DRF answers 403, send the user to Django's login page.
+  if (res.status === 403) {
+    window.location.href = `/api/auth/login/?next=${window.location.pathname}`
+  }
   const body = await res.json().catch(() => undefined)
   if (!res.ok) {
     const detail = body?.detail ?? JSON.stringify(body) ?? res.statusText

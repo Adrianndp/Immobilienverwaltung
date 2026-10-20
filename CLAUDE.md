@@ -15,3 +15,7 @@ Django + DRF backend (`backend/`), React + Vite + TypeScript frontend (`frontend
 - After changing frontend deps: `docker compose up -d --build -V frontend` (`-V` refreshes the container's `node_modules`).
 - Run Django commands that create files (`startapp`, `makemigrations`) locally with `backend/.venv/bin/python manage.py ...`, not in the container, which runs as root.
 - **Frontend:** MUI only, no custom CSS files. Pages go in `src/pages/`, reusable parts in `src/components/`.
+- **API calls** live in `src/api/` and components use them only through hooks. Components never call `fetch` directly.
+  - `client.ts`: `useApi` (GET) and `apiRequest` (POST/PUT/PATCH/DELETE, sends the CSRF token). The only place that calls `fetch`.
+  - `hooks.ts`: one hook per endpoint (`useMietobjekte()`, ...), built on `client.ts`.
+  - `types.ts`: response types, matching the DRF serializers.

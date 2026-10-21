@@ -1,5 +1,9 @@
-import { apiRequest, useApi } from './client'
+import { apiRequest, apiUpload, useApi } from './client'
 import type {
+  AnlageV,
+  Buchung,
+  BuchungImport,
+  Deckungsbeitrag,
   Einheit,
   EinheitInput,
   Kostenart,
@@ -13,6 +17,7 @@ import type {
   MietvertragStatus,
   Rechnung,
   RechnungInput,
+  Zuordnung,
 } from './types'
 
 export function useMietobjekte() {
@@ -45,8 +50,10 @@ export function useDeleteEinheit() {
   return (id: number) => apiRequest<void>('DELETE', `/einheiten/${id}/`)
 }
 
-export function useMietvertraege(status: MietvertragStatus) {
-  return useApi<Mietvertrag[]>(`/mietvertraege/?status=${status}`)
+// Without status: all Mietverträge.
+export function useMietvertraege(status?: MietvertragStatus) {
+  const query = status === undefined ? '' : `?status=${status}`
+  return useApi<Mietvertrag[]>(`/mietvertraege/${query}`)
 }
 
 export function useCreateMietvertrag() {
@@ -89,4 +96,30 @@ export function useCreateRechnung() {
 
 export function useDeleteRechnung() {
   return (id: number) => apiRequest<void>('DELETE', `/rechnungen/${id}/`)
+}
+
+export function useBuchungen() {
+  return useApi<Buchung[]>('/buchungen/')
+}
+
+export function useImportBuchungen() {
+  return (datei: File) => {
+    const data = new FormData()
+    data.append('datei', datei)
+    return apiUpload<BuchungImport>('/buchungen/import/', data)
+  }
+}
+
+export function useZuordnenBuchung() {
+  return (id: number, zuordnungen: Zuordnung[]) =>
+    apiRequest<Buchung>('PATCH', `/buchungen/${id}/`, { zuordnungen })
+}
+
+export function useDeckungsbeitrag(mietobjektId: number, jahr: number, monat?: number) {
+  const query = `?mietobjekt=${mietobjektId}&jahr=${jahr}${monat === undefined ? '' : `&monat=${monat}`}`
+  return useApi<Deckungsbeitrag>(`/auswertung/deckungsbeitrag/${query}`)
+}
+
+export function useAnlageV(mietobjektId: number, jahr: number) {
+  return useApi<AnlageV>(`/auswertung/anlage-v/?mietobjekt=${mietobjektId}&jahr=${jahr}`)
 }

@@ -6,6 +6,8 @@ from .views.mietvertrag import MietvertragViewSet
 from .views.kostenart import KostenartViewSet
 from .views.lieferant import LieferantViewSet
 from .views.rechnung import RechnungViewSet
+from .views.buchung import BuchungViewSet
+from .views.auswertung import AnlageVView, DeckungsbeitragView
 
 DETAIL = {'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}
 
@@ -22,5 +24,10 @@ urlpatterns = [
     path('lieferanten/<int:pk>/', LieferantViewSet.as_view(DETAIL), name='lieferanten-detail'),
     path('rechnungen/', RechnungViewSet.as_view({'get': 'list', 'post': 'create'}), name='rechnungen-list'),
     path('rechnungen/<int:pk>/', RechnungViewSet.as_view(DETAIL), name='rechnungen-detail'),
+    path('buchungen/', BuchungViewSet.as_view({'get': 'list'}), name='buchungen-list'),
+    path('buchungen/import/', BuchungViewSet.as_view({'post': 'importieren'}), name='buchungen-import'),
+    path('buchungen/<int:pk>/', BuchungViewSet.as_view({'patch': 'partial_update'}), name='buchungen-detail'),
+    path('auswertung/deckungsbeitrag/', DeckungsbeitragView.as_view(), name='auswertung-deckungsbeitrag'),
+    path('auswertung/anlage-v/', AnlageVView.as_view(), name='auswertung-anlage-v'),
     path('auth/', include('rest_framework.urls')),
 ]

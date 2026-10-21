@@ -45,7 +45,15 @@ const items: NavItem[] = [
     ],
   },
   { label: 'Konto', to: '/konto', icon: <AccountBalanceIcon /> },
-  { label: 'Auswertung', to: '/auswertung', icon: <InsightsIcon /> },
+  {
+    label: 'Auswertung',
+    to: '/auswertung',
+    icon: <InsightsIcon />,
+    unterpunkte: [
+      { label: 'Objekt Deckungsbeitrag', to: '/auswertung/deckungsbeitrag' },
+      { label: 'Auswertung V', to: '/auswertung/anlage-v' },
+    ],
+  },
 ]
 
 // A link is active on its path and sub-paths; a ?status= in the link must also match the current one.

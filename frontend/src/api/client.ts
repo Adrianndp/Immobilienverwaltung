@@ -68,6 +68,17 @@ export async function apiRequest<T>(
   return parseResponse<T>(res)
 }
 
+// Multipart upload: no Content-Type header, the browser sets it including the boundary.
+export async function apiUpload<T>(path: string, data: FormData): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'X-CSRFToken': getCookie('csrftoken') ?? '' },
+    body: data,
+  })
+  return parseResponse<T>(res)
+}
+
 interface ApiResult<T> {
   data: T | undefined
   error: Error | undefined

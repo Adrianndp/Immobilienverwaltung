@@ -198,3 +198,54 @@ export type RechnungInput = Omit<
   Rechnung,
   'id' | 'anteile' | 'lieferant_name' | 'kostenart_name' | 'offener_betrag' | 'bezahlt_am'
 > & { anteile: Omit<RechnungsAnteil, 'mietobjekt_name'>[] }
+
+export interface Zuordnung {
+  betrag: string
+  mietvertrag: number | null
+  rechnung: number | null
+}
+
+export interface Buchung {
+  id: number
+  buchungstag: string
+  wertstellung: string
+  kontoinhaber: string
+  buchungstext: string
+  buchungsart: string
+  betrag: string
+  zuordnungen: Zuordnung[]
+  partner: string
+  rechnungen: string
+}
+
+export interface BuchungImport {
+  importiert: number
+  uebersprungen: number
+}
+
+export interface Deckungsbeitrag {
+  einnahmen: { label: string; betrag: string }[]
+  einnahmen_summe: string
+  ausgaben: { kostenart: string; betrag: string }[]
+  ausgaben_summe: string
+  ergebnis: string
+}
+
+export interface AnlageV {
+  einnahmen: {
+    label: string
+    anzahl_zahlungen: number
+    kaltmiete: string
+    nebenkosten: string
+    gesamt: string
+  }[]
+  einnahmen_summe: string
+  kaltmiete_summe: string
+  nebenkosten_summe: string
+  schuldzinsen: string
+  instandhaltung: string
+  sonstige: string
+  abschreibungen: string
+  werbungskosten_summe: string
+  ueberschuss: string
+}

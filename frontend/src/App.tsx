@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import Layout from './components/Layout.tsx'
-import Auswertung from './pages/Auswertung.tsx'
+import AnlageV from './pages/AnlageV.tsx'
+import Deckungsbeitrag from './pages/Deckungsbeitrag.tsx'
 import Konto from './pages/Konto.tsx'
 import Kostenarten from './pages/Kostenarten.tsx'
 import LieferantDetail from './pages/LieferantDetail.tsx'
@@ -27,7 +28,11 @@ function App() {
             <Route path="lieferanten/:id" element={<LieferantDetail />} />
           </Route>
           <Route path="konto" element={<Konto />} />
-          <Route path="auswertung" element={<Auswertung />} />
+          <Route path="auswertung">
+            <Route index element={<Navigate to="/auswertung/deckungsbeitrag" replace />} />
+            <Route path="deckungsbeitrag" element={<Deckungsbeitrag />} />
+            <Route path="anlage-v" element={<AnlageV />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

@@ -9,6 +9,10 @@ from rest_framework.response import Response
 from ..models import Rechnung, RechnungsAnteil
 
 
+def lieferant_name(lieferant):
+    return lieferant.firmenname or f"{lieferant.vorname} {lieferant.nachname}".strip()
+
+
 class RechnungsAnteilSerializer(serializers.ModelSerializer):
     mietobjekt_name = serializers.CharField(source="mietobjekt.name", read_only=True)
 
@@ -34,8 +38,7 @@ class RechnungSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_lieferant_name(self, obj):
-        lieferant = obj.lieferant
-        return lieferant.firmenname or f"{lieferant.vorname} {lieferant.nachname}".strip()
+        return lieferant_name(obj.lieferant)
 
     # summe_bezahlt/letzte_zahlung are annotated by the viewset; a freshly created Rechnung has no payments.
     def _offen(self, obj):

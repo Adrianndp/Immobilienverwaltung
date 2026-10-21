@@ -21,6 +21,22 @@ export class ApiError extends Error {
   }
 }
 
+// Flattens a DRF 400 body into { 'feld': 'Meldung', 'mieter.vorname': 'Meldung', ... }.
+// Returns undefined for anything that is not a validation error.
+export function validierungsFehler(error: unknown): Record<string, string> | undefined {
+  if (!(error instanceof ApiError) || error.status !== 400) return undefined
+  if (!error.body || typeof error.body !== 'object') return undefined
+  const ergebnis: Record<string, string> = {}
+  function sammeln(wert: unknown, pfad: string) {
+    if (Array.isArray(wert)) ergebnis[pfad] = wert.join(' ')
+    else if (typeof wert === 'string') ergebnis[pfad] = wert
+    else if (wert && typeof wert === 'object')
+      for (const [k, v] of Object.entries(wert)) sammeln(v, pfad ? `${pfad}.${k}` : k)
+  }
+  sammeln(error.body, '')
+  return ergebnis
+}
+
 async function parseResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) return undefined as T
   // Not logged in: DRF answers 403, send the user to Django's login page.

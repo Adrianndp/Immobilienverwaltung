@@ -1,5 +1,13 @@
 import { apiRequest, useApi } from './client'
-import type { Einheit, EinheitInput, Mietobjekt, MietobjektInput } from './types'
+import type {
+  Einheit,
+  EinheitInput,
+  Mietobjekt,
+  MietobjektInput,
+  Mietvertrag,
+  MietvertragInput,
+  MietvertragStatus,
+} from './types'
 
 export function useMietobjekte() {
   return useApi<Mietobjekt[]>('/mietobjekte/')
@@ -29,4 +37,17 @@ export function useCreateEinheit() {
 
 export function useDeleteEinheit() {
   return (id: number) => apiRequest<void>('DELETE', `/einheiten/${id}/`)
+}
+
+export function useMietvertraege(status: MietvertragStatus) {
+  return useApi<Mietvertrag[]>(`/mietvertraege/?status=${status}`)
+}
+
+export function useCreateMietvertrag() {
+  return (data: MietvertragInput) => apiRequest<Mietvertrag>('POST', '/mietvertraege/', data)
+}
+
+export function useUpdateMietvertrag() {
+  return (id: number, data: Partial<MietvertragInput>) =>
+    apiRequest<Mietvertrag>('PATCH', `/mietvertraege/${id}/`, data)
 }

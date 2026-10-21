@@ -90,3 +90,51 @@ export interface Einheit {
 }
 
 export type EinheitInput = Omit<Einheit, 'id'>
+
+export interface Mieter {
+  id: number
+  vorname: string
+  nachname: string
+  strasse: string
+  hausnummer: string
+  plz: string
+  ort: string
+  land: string
+  telefon: string
+  email: string
+  geburtsdatum: string | null
+  kontoinhaber: string
+  iban: string
+}
+
+export type MietvertragStatus = 'laufend' | 'zukuenftig' | 'archiv'
+
+export const MIETVERTRAG_STATUS_LABELS: Record<MietvertragStatus, string> = {
+  laufend: 'Laufend',
+  zukuenftig: 'Zukünftig',
+  archiv: 'Archiv',
+}
+
+// The ?status= URL parameter; missing or unknown values mean laufend.
+export function mietvertragStatus(param: string | null): MietvertragStatus {
+  return param !== null && param in MIETVERTRAG_STATUS_LABELS ? (param as MietvertragStatus) : 'laufend'
+}
+
+export interface Mietvertrag {
+  id: number
+  mieter: Mieter
+  einheit: number
+  beginn: string
+  ende: string | null
+  kaltmiete: string
+  nebenkosten: string
+  kaution: string
+  einheit_name: string
+  mietobjekt_name: string
+  farbe: Farbe
+}
+
+export type MietvertragInput = Omit<
+  Mietvertrag,
+  'id' | 'mieter' | 'einheit_name' | 'mietobjekt_name' | 'farbe'
+> & { mieter: Omit<Mieter, 'id'> }

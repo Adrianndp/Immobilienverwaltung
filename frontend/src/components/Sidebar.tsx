@@ -1,4 +1,4 @@
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import ApartmentIcon from '@mui/icons-material/Apartment'
 import InsightsIcon from '@mui/icons-material/Insights'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
@@ -15,8 +15,8 @@ export const SIDEBAR_WIDTH = 240
 
 const items = [
   { label: 'Mietobjekte', to: '/mietobjekte', icon: <ApartmentIcon /> },
-  { label: 'Betriebskosten', to: '/betriebskosten', icon: <ReceiptLongIcon /> },
-  { label: 'Konto', to: '/konto', icon: <AccountCircleIcon /> },
+  { label: 'Kosten', to: '/kosten', icon: <ReceiptLongIcon /> },
+  { label: 'Konto', to: '/konto', icon: <AccountBalanceIcon /> },
   { label: 'Auswertung', to: '/auswertung', icon: <InsightsIcon /> },
 ]
 
@@ -43,7 +43,7 @@ function Sidebar() {
             key={to}
             component={Link}
             to={to}
-            selected={pathname === to}
+            selected={pathname === to || pathname.startsWith(`${to}/`)}
           >
             <ListItemIcon>{icon}</ListItemIcon>
             <ListItemText primary={label} />

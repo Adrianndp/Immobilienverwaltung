@@ -38,6 +38,7 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const data = Object.fromEntries(new FormData(event.currentTarget)) as unknown as MietobjektInput
+    if (nutzung === 'EIGEN') data.vermietung = ''
     setSaving(true)
     try {
       await createMietobjekt(data)
@@ -57,17 +58,8 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
-            <Stack direction="row" spacing={2}>
-              <TextField name="name" label="Name" required fullWidth />
-              <TextField
-                name="farbe"
-                label="Farbe"
-                type="color"
-                defaultValue="#1976D2"
-                sx={{ width: 100 }}
-              />
-            </Stack>
-            <TextField select name="objektart" label="Objektart" defaultValue="MFH" required>
+            <TextField name="name" label="Name" helperText="z. B. Wohnung 1" required />
+            <TextField select name="objektart" label="Objektart" defaultValue="ETW" required>
               {Object.entries(OBJEKTART_LABELS).map(([value, label]) => (
                 <MenuItem key={value} value={value}>
                   {label}

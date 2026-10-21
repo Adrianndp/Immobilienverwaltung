@@ -1,7 +1,7 @@
 import Typography from '@mui/material/Typography'
 
-function Betriebskosten() {
-  return <Typography variant="h4">Betriebskosten</Typography>
+function Kosten() {
+  return <Typography variant="h4">Kosten</Typography>
 }
 
-export default Betriebskosten
+export default Kosten

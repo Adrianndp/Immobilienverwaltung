@@ -18,9 +18,19 @@ class Mietobjekt(models.Model):
         GANZ = "GANZ", "Vermietung im Ganzen"
         TEILE = "TEILE", "Vermietung in Teilen (WG)"
 
+    class Farbe(models.TextChoices):
+        BLAU = "#1976D2", "Blau"
+        ORANGE = "#ED6C02", "Orange"
+        LILA = "#9C27B0", "Lila"
+        GRUEN = "#2E7D32", "Grün"
+        ROT = "#D32F2F", "Rot"
+        TUERKIS = "#0097A7", "Türkis"
+        BRAUN = "#795548", "Braun"
+        GRAU = "#616161", "Grau"
+
     eigentuemer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    farbe = models.CharField(max_length=7, default="#1976D2")
+    farbe = models.CharField(max_length=7, choices=Farbe.choices, default=Farbe.BLAU)
     strasse = models.CharField(max_length=100)
     hausnummer = models.CharField(max_length=10)
     plz = models.CharField(max_length=5)

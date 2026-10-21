@@ -9,6 +9,18 @@ function getCookie(name: string): string | undefined {
     ?.split('=')[1]
 }
 
+// Keeps the parsed response body, e.g. DRF validation errors ({ feld: ['Meldung'] }).
+export class ApiError extends Error {
+  status: number
+  body: unknown
+
+  constructor(status: number, body: unknown, message: string) {
+    super(message)
+    this.status = status
+    this.body = body
+  }
+}
+
 async function parseResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) return undefined as T
   // Not logged in: DRF answers 403, send the user to Django's login page.
@@ -18,7 +30,7 @@ async function parseResponse<T>(res: Response): Promise<T> {
   const body = await res.json().catch(() => undefined)
   if (!res.ok) {
     const detail = body?.detail ?? JSON.stringify(body) ?? res.statusText
-    throw new Error(`${res.status}: ${detail}`)
+    throw new ApiError(res.status, body, `${res.status}: ${detail}`)
   }
   return body as T
 }

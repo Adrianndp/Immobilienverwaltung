@@ -3,6 +3,15 @@
 export type Objektart = 'ETW' | 'EFH' | 'MFH' | 'GEW' | 'SON'
 export type Nutzung = 'EIGEN' | 'VERMIETUNG'
 export type Vermietung = 'GANZ' | 'TEILE'
+export type Farbe =
+  | '#1976D2'
+  | '#ED6C02'
+  | '#9C27B0'
+  | '#2E7D32'
+  | '#D32F2F'
+  | '#0097A7'
+  | '#795548'
+  | '#616161'
 
 // Labels of the Django TextChoices; the serializers send only the values.
 export const OBJEKTART_LABELS: Record<Objektart, string> = {
@@ -23,10 +32,21 @@ export const VERMIETUNG_LABELS: Record<Vermietung, string> = {
   TEILE: 'Vermietung in Teilen (WG)',
 }
 
+export const FARBE_LABELS: Record<Farbe, string> = {
+  '#1976D2': 'Blau',
+  '#ED6C02': 'Orange',
+  '#9C27B0': 'Lila',
+  '#2E7D32': 'Grün',
+  '#D32F2F': 'Rot',
+  '#0097A7': 'Türkis',
+  '#795548': 'Braun',
+  '#616161': 'Grau',
+}
+
 export interface Mietobjekt {
   id: number
   name: string
-  farbe: string
+  farbe: Farbe
   strasse: string
   hausnummer: string
   plz: string
@@ -59,7 +79,7 @@ export interface Mietobjekt {
 
 export type MietobjektInput = Pick<
   Mietobjekt,
-  'name' | 'farbe' | 'strasse' | 'hausnummer' | 'plz' | 'ort' | 'objektart' | 'nutzung'
+  'name' | 'strasse' | 'hausnummer' | 'plz' | 'ort' | 'objektart' | 'nutzung'
 > &
   Partial<Omit<Mietobjekt, 'id'>>
 
@@ -68,3 +88,5 @@ export interface Einheit {
   mietobjekt: number
   name: string
 }
+
+export type EinheitInput = Omit<Einheit, 'id'>

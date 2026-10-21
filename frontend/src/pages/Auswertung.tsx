@@ -1,7 +1,7 @@
 import Typography from '@mui/material/Typography'
 
-function Dashboard() {
-  return <Typography variant="h4">Dashboard</Typography>
+function Auswertung() {
+  return <Typography variant="h4">Auswertung</Typography>
 }
 
-export default Dashboard
+export default Auswertung

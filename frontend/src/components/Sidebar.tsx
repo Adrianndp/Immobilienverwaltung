@@ -1,6 +1,6 @@
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import ApartmentIcon from '@mui/icons-material/Apartment'
-import DashboardIcon from '@mui/icons-material/Dashboard'
+import InsightsIcon from '@mui/icons-material/Insights'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import Drawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
@@ -14,10 +14,10 @@ import { Link, useLocation } from 'react-router'
 export const SIDEBAR_WIDTH = 240
 
 const items = [
-  { label: 'Dashboard', to: '/', icon: <DashboardIcon /> },
   { label: 'Mietobjekte', to: '/mietobjekte', icon: <ApartmentIcon /> },
   { label: 'Betriebskosten', to: '/betriebskosten', icon: <ReceiptLongIcon /> },
   { label: 'Konto', to: '/konto', icon: <AccountCircleIcon /> },
+  { label: 'Auswertung', to: '/auswertung', icon: <InsightsIcon /> },
 ]
 
 function Sidebar() {

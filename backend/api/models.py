@@ -54,7 +54,7 @@ class Mietobjekt(models.Model):
 
 
 class Einheit(models.Model):
-y    mietobjekt = models.ForeignKey(Mietobjekt, on_delete=models.CASCADE, related_name="einheiten")
+    mietobjekt = models.ForeignKey(Mietobjekt, on_delete=models.CASCADE, related_name="einheiten")
     name = models.CharField(max_length=100)
 
 

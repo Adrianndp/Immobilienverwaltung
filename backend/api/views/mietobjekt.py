@@ -1,24 +1,42 @@
-from rest_framework import serializers, viewsets, permissions
+from django.db import transaction
+from rest_framework import permissions, serializers, viewsets
+
 from ..models import Mietobjekt
 
 
 class MietobjektSerializer(serializers.ModelSerializer):
-    objekttyp_label = serializers.CharField(source="get_objekttyp_display", read_only=True)
-
     class Meta:
         model = Mietobjekt
-        fields = [
-            "id", "objekttyp", "objekttyp_label",
-            "strasse", "hausnummer", "plz", "stadt", "land",
-            "erstellt_am", "geaendert_am",
-        ]
-        read_only_fields = ["id", "erstellt_am", "geaendert_am"]
+        exclude = ["eigentuemer"]
 
     def validate_plz(self, value):
         if not (value.isdigit() and len(value) == 5):
             raise serializers.ValidationError("PLZ muss 5 Ziffern haben.")
         return value
 
+    def validate(self, data):
+        nutzung = data.get("nutzung", getattr(self.instance, "nutzung", None))
+        vermietung = data.get("vermietung", getattr(self.instance, "vermietung", ""))
+
+        if nutzung == Mietobjekt.Nutzung.VERMIETUNG and not vermietung:
+            raise serializers.ValidationError({"vermietung": "Bitte Art der Vermietung wählen."})
+        if nutzung == Mietobjekt.Nutzung.EIGEN:
+            data["vermietung"] = ""
+
+        weg_anteil = data.get("weg_anteil", getattr(self.instance, "weg_anteil", None))
+        weg_nenner = data.get("weg_nenner", getattr(self.instance, "weg_nenner", None))
+
+        if (weg_anteil is None) != (weg_nenner is None):
+            raise serializers.ValidationError({"weg_anteil": "Anteil und Nenner zusammen angeben."})
+
+        return data
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            mietobjekt = super().create(validated_data)
+            if mietobjekt.vermietung == Mietobjekt.Vermietung.GANZ:
+                mietobjekt.einheiten.create(name="Gesamt")
+        return mietobjekt
 
 
 class MietobjektViewSet(viewsets.ModelViewSet):

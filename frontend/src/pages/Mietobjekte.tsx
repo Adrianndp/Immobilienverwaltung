@@ -2,26 +2,22 @@ import Accordion from '@mui/material/Accordion'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
 import Stack from '@mui/material/Stack'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useState } from 'react'
 import { useEinheiten, useMietobjekte } from '../api/hooks'
+import { NUTZUNG_LABELS, OBJEKTART_LABELS, VERMIETUNG_LABELS } from '../api/types'
 import MietobjektDialog from '../components/MietobjektDialog'
 
-function formatFlaeche(value: string) {
-  return `${Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2 })} m²`
-}
-
-function EinheitenTabelle({ mietobjektId }: { mietobjektId: number }) {
+function EinheitenListe({ mietobjektId }: { mietobjektId: number }) {
   const { data: einheiten, loading, error } = useEinheiten(mietobjektId)
 
   if (loading) return <CircularProgress size={24} />
@@ -29,30 +25,13 @@ function EinheitenTabelle({ mietobjektId }: { mietobjektId: number }) {
   if (!einheiten?.length) return <Typography color="text.secondary">Noch keine Einheiten.</Typography>
 
   return (
-    <Table size="small">
-      <TableHead>
-        <TableRow>
-          <TableCell>Bezeichnung</TableCell>
-          <TableCell>Typ</TableCell>
-          <TableCell align="right">Fläche</TableCell>
-          <TableCell>Geschoss</TableCell>
-          <TableCell align="right">Etage</TableCell>
-          <TableCell>Lage</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {einheiten.map((e) => (
-          <TableRow key={e.id}>
-            <TableCell>{e.bezeichnung}</TableCell>
-            <TableCell>{e.einheitstyp_label}</TableCell>
-            <TableCell align="right">{formatFlaeche(e.vermietete_flaeche)}</TableCell>
-            <TableCell>{e.geschoss_label}</TableCell>
-            <TableCell align="right">{e.etage}</TableCell>
-            <TableCell>{e.lage_label}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <List dense disablePadding>
+      {einheiten.map((e) => (
+        <ListItem key={e.id} disableGutters>
+          <ListItemText primary={e.name} />
+        </ListItem>
+      ))}
+    </List>
   )
 }
 
@@ -80,17 +59,22 @@ function Mietobjekte() {
         {mietobjekte?.map((m) => (
           <Accordion key={m.id} slotProps={{ transition: { unmountOnExit: true } }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Stack>
-                <Typography sx={{ fontWeight: 500 }}>
-                  {m.strasse} {m.hausnummer}, {m.plz} {m.stadt}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {m.objekttyp_label}
-                </Typography>
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: m.farbe, flexShrink: 0 }} />
+                <Stack>
+                  <Typography sx={{ fontWeight: 500 }}>{m.name}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {m.strasse} {m.hausnummer}, {m.plz} {m.ort}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {OBJEKTART_LABELS[m.objektart]} ·{' '}
+                    {m.vermietung ? VERMIETUNG_LABELS[m.vermietung] : NUTZUNG_LABELS[m.nutzung]}
+                  </Typography>
+                </Stack>
               </Stack>
             </AccordionSummary>
             <AccordionDetails>
-              <EinheitenTabelle mietobjektId={m.id} />
+              <EinheitenListe mietobjektId={m.id} />
             </AccordionDetails>
           </Accordion>
         ))}

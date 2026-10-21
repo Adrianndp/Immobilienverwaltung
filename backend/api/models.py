@@ -54,12 +54,12 @@ class Mietobjekt(models.Model):
 
 
 class Einheit(models.Model):
-    objekt = models.ForeignKey(Objekt, on_delete=models.CASCADE, related_name="einheiten")
+y    mietobjekt = models.ForeignKey(Mietobjekt, on_delete=models.CASCADE, related_name="einheiten")
     name = models.CharField(max_length=100)
 
 
 class Bodenrichtwert(models.Model):
-    objekt = models.ForeignKey(Objekt, on_delete=models.CASCADE, related_name="bodenrichtwerte")
+    mietobjekt = models.ForeignKey(Mietobjekt, on_delete=models.CASCADE, related_name="bodenrichtwerte")
     datum = models.DateField()
     wert = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -69,7 +69,7 @@ class Darlehen(models.Model):
         ANNUITAET = "ANNUITAET", "Annuitätendarlehen"
         TILGUNG = "TILGUNG", "Tilgungsdarlehen"
 
-    objekt = models.ForeignKey(Objekt, on_delete=models.CASCADE, related_name="darlehen")
+    mietobjekt = models.ForeignKey(Mietobjekt, on_delete=models.CASCADE, related_name="darlehen")
     bank = models.CharField(max_length=100)
     iban = models.CharField(max_length=34)
     beginn = models.DateField()
@@ -143,7 +143,7 @@ class Rechnung(models.Model):
 
 class RechnungsAnteil(models.Model):
     rechnung = models.ForeignKey(Rechnung, on_delete=models.CASCADE, related_name="anteile")
-    objekt = models.ForeignKey(Objekt, on_delete=models.PROTECT)
+    mietobjekt = models.ForeignKey(Mietobjekt, on_delete=models.PROTECT)
     prozent = models.DecimalField(max_digits=5, decimal_places=2)
 
 

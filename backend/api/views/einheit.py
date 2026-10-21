@@ -1,17 +1,12 @@
-from rest_framework import serializers, viewsets, permissions
+from rest_framework import permissions, serializers, viewsets
+
 from ..models import Einheit
 
 
 class EinheitSerializer(serializers.ModelSerializer):
-    einheitstyp_label = serializers.CharField(source="get_einheitstyp_display", read_only=True)
-    geschoss_label = serializers.CharField(source="get_geschoss_display", read_only=True)
-    lage_label = serializers.CharField(source="get_lage_display", read_only=True)
-
     class Meta:
         model = Einheit
-        fields = ["id", "mietobjekt", "einheitstyp", "bezeichnung",
-                  "vermietete_flaeche", "geschoss", "etage", "lage",
-                    "einheitstyp_label", "geschoss_label", "lage_label"]
+        fields = "__all__"
 
     def validate_mietobjekt(self, value):
         if value.eigentuemer != self.context["request"].user:

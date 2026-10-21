@@ -28,7 +28,7 @@ export function validierungsFehler(error: unknown): Record<string, string> | und
   if (!error.body || typeof error.body !== 'object') return undefined
   const ergebnis: Record<string, string> = {}
   function sammeln(wert: unknown, pfad: string) {
-    if (Array.isArray(wert)) ergebnis[pfad] = wert.join(' ')
+    if (Array.isArray(wert) && wert.every((w) => typeof w === 'string')) ergebnis[pfad] = wert.join(' ')
     else if (typeof wert === 'string') ergebnis[pfad] = wert
     else if (wert && typeof wert === 'object')
       for (const [k, v] of Object.entries(wert)) sammeln(v, pfad ? `${pfad}.${k}` : k)

@@ -15,13 +15,24 @@ export function oderLeer(value: string | null) {
   return value || LEER
 }
 
-export function formatEuro(value: string | null) {
+export function formatEuro(value: string | null, nachkommastellen = 0) {
   if (value === null) return LEER
   return Number(value).toLocaleString('de-DE', {
     style: 'currency',
     currency: 'EUR',
-    maximumFractionDigits: 0,
+    minimumFractionDigits: nachkommastellen,
+    maximumFractionDigits: nachkommastellen,
   })
+}
+
+// "80.00" -> "80 %", "33.50" -> "33,5 %"
+export function formatProzent(value: string) {
+  return `${Number(value).toLocaleString('de-DE')} %`
+}
+
+// Lieferanten have either a firmenname or a person's name.
+export function lieferantName(l: { firmenname: string; vorname: string; nachname: string }) {
+  return l.firmenname || `${l.vorname} ${l.nachname}`.trim()
 }
 
 // "2024-03-15" -> "15.03.2024", without going through Date to avoid time zone shifts.

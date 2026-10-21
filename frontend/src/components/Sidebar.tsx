@@ -20,8 +20,7 @@ interface NavItem {
   label: string
   to: string
   icon: ReactNode
-  // Sub-items of /mieter, one per ?status= value.
-  unterpunkte?: { label: string; to: string; status: MietvertragStatus }[]
+  unterpunkte?: { label: string; to: string }[]
 }
 
 const items: NavItem[] = [
@@ -33,13 +32,29 @@ const items: NavItem[] = [
     unterpunkte: (Object.keys(MIETVERTRAG_STATUS_LABELS) as MietvertragStatus[]).map((status) => ({
       label: MIETVERTRAG_STATUS_LABELS[status],
       to: `/mieter?status=${status}`,
-      status,
     })),
   },
-  { label: 'Kosten', to: '/kosten', icon: <ReceiptLongIcon /> },
+  {
+    label: 'Kosten',
+    to: '/kosten',
+    icon: <ReceiptLongIcon />,
+    unterpunkte: [
+      { label: 'Rechnungen', to: '/kosten/rechnungen' },
+      { label: 'Kostenarten', to: '/kosten/kostenarten' },
+      { label: 'Lieferanten', to: '/kosten/lieferanten' },
+    ],
+  },
   { label: 'Konto', to: '/konto', icon: <AccountBalanceIcon /> },
   { label: 'Auswertung', to: '/auswertung', icon: <InsightsIcon /> },
 ]
+
+// A link is active on its path and sub-paths; a ?status= in the link must also match the current one.
+function istAktiv(to: string, pathname: string, status: MietvertragStatus) {
+  const [pfad, query] = to.split('?')
+  if (pathname !== pfad && !pathname.startsWith(`${pfad}/`)) return false
+  const linkStatus = new URLSearchParams(query).get('status')
+  return linkStatus === null || linkStatus === status
+}
 
 function Sidebar() {
   const { pathname } = useLocation()
@@ -67,7 +82,7 @@ function Sidebar() {
               component={Link}
               to={to}
               // With sub-items, the active sub-item is highlighted instead.
-              selected={!unterpunkte && (pathname === to || pathname.startsWith(`${to}/`))}
+              selected={!unterpunkte && istAktiv(to, pathname, status)}
             >
               <ListItemIcon>{icon}</ListItemIcon>
               <ListItemText primary={label} />
@@ -77,7 +92,7 @@ function Sidebar() {
                 key={u.to}
                 component={Link}
                 to={u.to}
-                selected={pathname === to && status === u.status}
+                selected={istAktiv(u.to, pathname, status)}
                 dense
                 sx={{ pl: 9 }}
               >

@@ -138,3 +138,63 @@ export type MietvertragInput = Omit<
   Mietvertrag,
   'id' | 'mieter' | 'einheit_name' | 'mietobjekt_name' | 'farbe'
 > & { mieter: Omit<Mieter, 'id'> }
+
+export type Kategorie = 'SONSTIGE' | 'INSTANDHALTUNG' | 'ABSCHREIBUNG'
+
+export const KATEGORIE_LABELS: Record<Kategorie, string> = {
+  SONSTIGE: 'Sonstige Aufwendungen',
+  INSTANDHALTUNG: 'Instandhaltungsaufwendung',
+  ABSCHREIBUNG: 'Abschreibung',
+}
+
+export interface Kostenart {
+  id: number
+  name: string
+  kategorie: Kategorie
+  abschreibung_prozent: string | null
+  kategorie_label: string
+}
+
+export type KostenartInput = Omit<Kostenart, 'id' | 'kategorie_label'>
+
+export interface Lieferant {
+  id: number
+  firmenname: string
+  vorname: string
+  nachname: string
+  strasse: string
+  hausnummer: string
+  plz: string
+  ort: string
+  land: string
+  email: string
+  telefon: string
+}
+
+export type LieferantInput = Omit<Lieferant, 'id'>
+
+export interface RechnungsAnteil {
+  mietobjekt: number
+  mietobjekt_name: string
+  prozent: string
+}
+
+export interface Rechnung {
+  id: number
+  lieferant: number
+  kostenart: number
+  datum: string
+  name: string
+  rechnungsnummer: string
+  betrag: string
+  anteile: RechnungsAnteil[]
+  lieferant_name: string
+  kostenart_name: string
+  offener_betrag: string
+  bezahlt_am: string | null
+}
+
+export type RechnungInput = Omit<
+  Rechnung,
+  'id' | 'anteile' | 'lieferant_name' | 'kostenart_name' | 'offener_betrag' | 'bezahlt_am'
+> & { anteile: Omit<RechnungsAnteil, 'mietobjekt_name'>[] }

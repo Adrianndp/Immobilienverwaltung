@@ -122,9 +122,15 @@ class Kostenart(models.Model):
         INSTANDHALTUNG = "INSTANDHALTUNG", "Instandhaltungsaufwendung"
         ABSCHREIBUNG = "ABSCHREIBUNG", "Abschreibung"
 
-    name = models.CharField(max_length=100, unique=True)
+    eigentuemer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
     kategorie = models.CharField(max_length=14, choices=Kategorie.choices)
     abschreibung_prozent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["eigentuemer", "name"], name="kostenart_eigentuemer_name_unique")
+        ]
 
 
 class Lieferant(models.Model):
@@ -148,7 +154,6 @@ class Rechnung(models.Model):
     name = models.CharField(max_length=200)
     rechnungsnummer = models.CharField(max_length=100)
     betrag = models.DecimalField(max_digits=12, decimal_places=2)
-    pdf = models.FileField(upload_to="rechnungen/", blank=True)
 
 
 class RechnungsAnteil(models.Model):

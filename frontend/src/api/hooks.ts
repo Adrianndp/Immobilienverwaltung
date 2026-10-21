@@ -1,8 +1,12 @@
 import { apiRequest, apiUpload, useApi } from './client'
 import type {
   AnlageV,
+  Bodenrichtwert,
+  BodenrichtwertInput,
   Buchung,
   BuchungImport,
+  Darlehen,
+  DarlehenInput,
   Deckungsbeitrag,
   Einheit,
   EinheitInput,
@@ -122,4 +126,31 @@ export function useDeckungsbeitrag(mietobjektId: number, jahr: number, monat?: n
 
 export function useAnlageV(mietobjektId: number, jahr: number) {
   return useApi<AnlageV>(`/auswertung/anlage-v/?mietobjekt=${mietobjektId}&jahr=${jahr}`)
+}
+
+// Without mietobjektId: all Darlehen.
+export function useDarlehen(mietobjektId?: number) {
+  const query = mietobjektId === undefined ? '' : `?mietobjekt=${mietobjektId}`
+  return useApi<Darlehen[]>(`/darlehen/${query}`)
+}
+
+export function useCreateDarlehen() {
+  return (data: DarlehenInput) => apiRequest<Darlehen>('POST', '/darlehen/', data)
+}
+
+export function useUpdateDarlehen() {
+  return (id: number, data: Partial<DarlehenInput>) => apiRequest<Darlehen>('PATCH', `/darlehen/${id}/`, data)
+}
+
+// Newest first.
+export function useBodenrichtwerte(mietobjektId: number) {
+  return useApi<Bodenrichtwert[]>(`/bodenrichtwerte/?mietobjekt=${mietobjektId}`)
+}
+
+export function useCreateBodenrichtwert() {
+  return (data: BodenrichtwertInput) => apiRequest<Bodenrichtwert>('POST', '/bodenrichtwerte/', data)
+}
+
+export function useDeleteBodenrichtwert() {
+  return (id: number) => apiRequest<void>('DELETE', `/bodenrichtwerte/${id}/`)
 }

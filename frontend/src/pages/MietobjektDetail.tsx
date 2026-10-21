@@ -32,8 +32,10 @@ import {
   type Mietobjekt,
   type Nutzung,
 } from '../api/types'
+import BodenrichtwertDialog from '../components/BodenrichtwertDialog'
+import DarlehenDialog from '../components/DarlehenDialog'
 import FarbAuswahl from '../components/FarbAuswahl'
-import { laenderName } from '../format'
+import { formatEuro, laenderName, LEER } from '../format'
 
 type Feld = Exclude<keyof Mietobjekt, 'id'>
 type Fehler = Partial<Record<string, string[]>>
@@ -98,7 +100,13 @@ function Zelle({ children, breit }: { children: ReactNode; breit?: boolean }) {
   return <Grid size={breit ? { xs: 12, md: 8 } : { xs: 12, sm: 6, md: 4 }}>{children}</Grid>
 }
 
-function MietobjektFormular({ mietobjekt }: { mietobjekt: Mietobjekt }) {
+interface FormularProps {
+  mietobjekt: Mietobjekt
+  onDarlehen: () => void
+  onBodenrichtwert: () => void
+}
+
+function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: FormularProps) {
   const updateMietobjekt = useUpdateMietobjekt()
   const [gespeichert, setGespeichert] = useState(mietobjekt)
   const [werte, setWerte] = useState(mietobjekt)
@@ -219,6 +227,33 @@ function MietobjektFormular({ mietobjekt }: { mietobjekt: Mietobjekt }) {
           </Zelle>
           <Zelle>
             <TextField label="Marktwert (€)" {...feld('marktwert')} />
+          </Zelle>
+          <Zelle>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              {/* From the props, not the form state: it changes when a Darlehen is saved. */}
+              <TextField
+                label="Restschuld"
+                value={formatEuro(mietobjekt.restschuld, 2)}
+                fullWidth
+                slotProps={{ htmlInput: { readOnly: true } }}
+              />
+              <Button variant="outlined" onClick={onDarlehen}>
+                Darlehen
+              </Button>
+            </Stack>
+          </Zelle>
+          <Zelle>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <TextField
+                label="Bodenrichtwert"
+                value={mietobjekt.bodenrichtwert ? `${formatEuro(mietobjekt.bodenrichtwert, 2)}/m²` : LEER}
+                fullWidth
+                slotProps={{ htmlInput: { readOnly: true } }}
+              />
+              <Button variant="outlined" onClick={onBodenrichtwert}>
+                Verlauf
+              </Button>
+            </Stack>
           </Zelle>
           <Grid size={12}>
             <FarbAuswahl
@@ -398,7 +433,9 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
 
 function MietobjektDetail() {
   const id = Number(useParams().id)
-  const { data: mietobjekt, loading, error } = useMietobjekt(id)
+  const { data: mietobjekt, loading, error, reload } = useMietobjekt(id)
+  const [darlehenOpen, setDarlehenOpen] = useState(false)
+  const [bodenrichtwertOpen, setBodenrichtwertOpen] = useState(false)
 
   return (
     <Stack spacing={2}>
@@ -413,8 +450,24 @@ function MietobjektDetail() {
       {error && <Alert severity="error">Mietobjekt konnte nicht geladen werden.</Alert>}
       {mietobjekt && (
         <>
-          <MietobjektFormular key={mietobjekt.id} mietobjekt={mietobjekt} />
+          <MietobjektFormular
+            key={mietobjekt.id}
+            mietobjekt={mietobjekt}
+            onDarlehen={() => setDarlehenOpen(true)}
+            onBodenrichtwert={() => setBodenrichtwertOpen(true)}
+          />
           <Einheiten mietobjektId={mietobjekt.id} />
+          {/* Outside the form: React submit events would bubble through the Dialog's portal. */}
+          {darlehenOpen && (
+            <DarlehenDialog mietobjekt={mietobjekt} onClose={() => setDarlehenOpen(false)} onSaved={reload} />
+          )}
+          {bodenrichtwertOpen && (
+            <BodenrichtwertDialog
+              mietobjekt={mietobjekt}
+              onClose={() => setBodenrichtwertOpen(false)}
+              onSaved={reload}
+            />
+          )}
         </>
       )}
     </Stack>

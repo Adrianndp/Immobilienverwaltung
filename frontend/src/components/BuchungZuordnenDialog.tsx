@@ -6,6 +6,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import FormHelperText from '@mui/material/FormHelperText'
 import IconButton from '@mui/material/IconButton'
+import ListSubheader from '@mui/material/ListSubheader'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -15,14 +16,22 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useState, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
-import { useMietvertraege, useRechnungen, useZuordnenBuchung } from '../api/hooks'
-import type { Buchung } from '../api/types'
+import { useDarlehen, useMietvertraege, useRechnungen, useZuordnenBuchung } from '../api/hooks'
+import type { Buchung, Zuordnung } from '../api/types'
 import { Zeile } from './InfoKarte'
 import { formatDatum, formatEuro } from '../format'
 
+type ZielFeld = 'mietvertrag' | 'rechnung' | 'darlehen'
+
 interface ZuordnungsZeile {
-  ziel: number | ''
+  // "rechnung:5": an outgoing Buchung can go to a Rechnung or a Darlehen, so the Select value names both.
+  ziel: string
   betrag: string
+}
+
+function zielVon(z: Zuordnung) {
+  const feld = (['mietvertrag', 'rechnung', 'darlehen'] as const).find((f) => z[f] !== null)
+  return feld ? `${feld}:${z[feld]}` : ''
 }
 
 interface Props {
@@ -40,13 +49,13 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
   const zuordnen = useZuordnenBuchung()
   const { data: mietvertraege } = useMietvertraege()
   const { data: rechnungen } = useRechnungen()
-  // Incoming money is assigned to Mietverträge, outgoing money to Rechnungen.
+  const { data: darlehen } = useDarlehen()
+  // Incoming money is assigned to Mietverträge, outgoing money to Rechnungen or Darlehen.
   const eingehend = Number(buchung.betrag) > 0
-  const feld = eingehend ? 'mietvertrag' : 'rechnung'
   const betragAbs = buchung.betrag.replace('-', '')
   const [zeilen, setZeilen] = useState<ZuordnungsZeile[]>(
     buchung.zuordnungen.length
-      ? buchung.zuordnungen.map((z) => ({ ziel: z[feld] ?? '', betrag: z.betrag }))
+      ? buchung.zuordnungen.map((z) => ({ ziel: zielVon(z), betrag: z.betrag }))
       : [{ ziel: '', betrag: betragAbs }],
   )
   const [fehler, setFehler] = useState<Record<string, string>>({})
@@ -55,12 +64,28 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
 
   const offenCent = cent(betragAbs) - zeilen.reduce((s, z) => s + cent(z.betrag), 0)
 
+  // Select children must be a flat list, so the group headers are items of it.
   const optionen = eingehend
-    ? mietvertraege?.map((m) => ({
-        id: m.id,
-        label: `${m.mieter.vorname} ${m.mieter.nachname} – ${m.mietobjekt_name} ${m.einheit_name}`,
-      }))
-    : rechnungen?.map((r) => ({ id: r.id, label: `${r.rechnungsnummer} – ${r.lieferant_name}` }))
+    ? mietvertraege?.map((m) => (
+        <MenuItem key={m.id} value={`mietvertrag:${m.id}`}>
+          {m.mieter.vorname} {m.mieter.nachname} – {m.mietobjekt_name} {m.einheit_name}
+        </MenuItem>
+      ))
+    : rechnungen &&
+      darlehen && [
+        <ListSubheader key="rechnungen">Rechnungen</ListSubheader>,
+        ...rechnungen.map((r) => (
+          <MenuItem key={`r${r.id}`} value={`rechnung:${r.id}`}>
+            {r.rechnungsnummer} – {r.lieferant_name}
+          </MenuItem>
+        )),
+        <ListSubheader key="darlehen">Darlehen</ListSubheader>,
+        ...darlehen.map((d) => (
+          <MenuItem key={`d${d.id}`} value={`darlehen:${d.id}`}>
+            Darlehen – {d.bank} – {d.mietobjekt_name}
+          </MenuItem>
+        )),
+      ]
 
   function setZeile(index: number, aenderung: Partial<ZuordnungsZeile>) {
     setZeilen((liste) => liste.map((z, i) => (i === index ? { ...z, ...aenderung } : z)))
@@ -74,11 +99,15 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
     try {
       await zuordnen(
         buchung.id,
-        zeilen.map((z) => ({
-          betrag: z.betrag,
-          mietvertrag: eingehend ? Number(z.ziel) : null,
-          rechnung: eingehend ? null : Number(z.ziel),
-        })),
+        zeilen.map((z) => {
+          const [feld, id] = z.ziel.split(':')
+          return {
+            betrag: z.betrag,
+            mietvertrag: feld === 'mietvertrag' ? Number(id) : null,
+            rechnung: feld === 'rechnung' ? Number(id) : null,
+            darlehen: feld === 'darlehen' ? Number(id) : null,
+          }
+        }),
       )
       onSaved()
       onClose()
@@ -116,25 +145,22 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
 
             <Stack spacing={2}>
               {zeilen.map((z, i) => {
+                const feld = z.ziel.split(':')[0] as ZielFeld
                 const zielFehler =
                   fehler[`zuordnungen.${i}.${feld}`] ?? fehler[`zuordnungen.${i}.non_field_errors`]
                 return (
                   <Stack key={i} direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
                     <TextField
                       select
-                      label={eingehend ? 'Mietvertrag' : 'Rechnung'}
+                      label={eingehend ? 'Mietvertrag' : 'Rechnung / Darlehen'}
                       required
                       fullWidth
                       value={optionen?.length ? z.ziel : ''}
-                      onChange={(e) => setZeile(i, { ziel: Number(e.target.value) })}
+                      onChange={(e) => setZeile(i, { ziel: e.target.value })}
                       error={!!zielFehler}
                       helperText={zielFehler}
                     >
-                      {optionen?.map((o) => (
-                        <MenuItem key={o.id} value={o.id}>
-                          {o.label}
-                        </MenuItem>
-                      ))}
+                      {optionen}
                     </TextField>
                     <TextField
                       label="Betrag (€)"

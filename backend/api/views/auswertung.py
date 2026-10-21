@@ -1,3 +1,5 @@
+import calendar
+from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.db.models import Count, DecimalField, F, Sum
@@ -27,6 +29,11 @@ class DeckungsbeitragView(APIView):
             mietobjekt_id = int(request.query_params["mietobjekt"])
             jahr = int(request.query_params["jahr"])
             monat = int(request.query_params["monat"]) if request.query_params.get("monat") else None
+            if monat is None:
+                von, bis = date(jahr, 1, 1), date(jahr, 12, 31)
+            else:
+                von = date(jahr, monat, 1)
+                bis = date(jahr, monat, calendar.monthrange(jahr, monat)[1])
         except (KeyError, ValueError):
             return Response(
                 {"detail": "Parameter mietobjekt und jahr (und optional monat) als Zahl angeben."},
@@ -62,6 +69,11 @@ class DeckungsbeitragView(APIView):
             )
             .order_by("-summe", "rechnung__kostenart__name")
         )
+        ausgaben = [{"kostenart": a["rechnung__kostenart__name"], "summe": a["summe"]} for a in ausgaben]
+        schuldzinsen = sum((d.zinsen(von, bis) for d in mietobjekt.darlehen.all()), Decimal("0"))
+        if schuldzinsen > 0:
+            ausgaben.append({"kostenart": "Schuldzinsen", "summe": schuldzinsen})
+            ausgaben.sort(key=lambda a: a["summe"], reverse=True)
 
         einnahmen_summe = sum((e["summe"] for e in einnahmen), Decimal("0"))
         ausgaben_summe = sum((a["summe"] for a in ausgaben), Decimal("0"))
@@ -77,7 +89,7 @@ class DeckungsbeitragView(APIView):
                 ],
                 "einnahmen_summe": betrag(einnahmen_summe),
                 "ausgaben": [
-                    {"kostenart": a["rechnung__kostenart__name"], "betrag": betrag(a["summe"])} for a in ausgaben
+                    {"kostenart": a["kostenart"], "betrag": betrag(a["summe"])} for a in ausgaben
                 ],
                 "ausgaben_summe": betrag(ausgaben_summe),
                 "ergebnis": betrag(einnahmen_summe - ausgaben_summe),
@@ -157,7 +169,9 @@ class AnlageVView(APIView):
             bereits = (jahr - a.rechnung.datum.year) * jahresbetrag
             abschreibungen += max(Decimal("0"), min(jahresbetrag, anteil - bereits))
 
-        schuldzinsen = Decimal("0")
+        schuldzinsen = sum(
+            (d.zinsen(date(jahr, 1, 1), date(jahr, 12, 31)) for d in mietobjekt.darlehen.all()), Decimal("0")
+        )
         einnahmen_summe = sum((e["gesamt"] for e in einnahmen), Decimal("0"))
         werbungskosten_summe = schuldzinsen + instandhaltung + sonstige + abschreibungen
         return Response(

@@ -1,5 +1,10 @@
+import calendar
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
+
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class Mietobjekt(models.Model):
@@ -88,6 +93,45 @@ class Darlehen(models.Model):
     zinsbindung_bis = models.DateField(null=True, blank=True)
     sollzins = models.DecimalField(max_digits=5, decimal_places=3)
     tilgung = models.DecimalField(max_digits=5, decimal_places=3)
+
+    def tilgungsplan(self):
+        """Monthly {datum, zins, tilgung, rest}, first payment one month after beginn, until repaid (max. 600 months)."""
+
+        def runden(wert):
+            return wert.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        def plus_monate(tag, n):
+            jahr, monat = divmod(tag.month - 1 + n, 12)
+            jahr, monat = tag.year + jahr, monat + 1
+            # 31 Jan + 1 month -> 28/29 Feb
+            return date(jahr, monat, min(tag.day, calendar.monthrange(jahr, monat)[1]))
+
+        annuitaet = runden(self.betrag * (self.sollzins + self.tilgung) / 100 / 12)
+        tilgung_fest = runden(self.betrag * self.tilgung / 100 / 12)
+        rest = self.betrag
+        plan = []
+        for n in range(1, 601):
+            if rest <= 0:
+                break
+            zins = runden(rest * self.sollzins / 100 / 12)
+            tilgung = annuitaet - zins if self.art == self.Art.ANNUITAET else tilgung_fest
+            # The last payment only repays what is left.
+            tilgung = min(tilgung, rest)
+            rest -= tilgung
+            plan.append({"datum": plus_monate(self.beginn, n), "zins": zins, "tilgung": tilgung, "rest": rest})
+        return plan
+
+    def rate(self):
+        plan = self.tilgungsplan()
+        return plan[0]["zins"] + plan[0]["tilgung"] if plan else Decimal("0")
+
+    def restschuld(self, stichtag=None):
+        stichtag = stichtag or timezone.localdate()
+        bisher = [monat for monat in self.tilgungsplan() if monat["datum"] <= stichtag]
+        return bisher[-1]["rest"] if bisher else self.betrag
+
+    def zinsen(self, von, bis):
+        return sum((monat["zins"] for monat in self.tilgungsplan() if von <= monat["datum"] <= bis), Decimal("0"))
 
 
 class Mieter(models.Model):

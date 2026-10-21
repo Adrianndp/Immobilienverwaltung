@@ -8,6 +8,8 @@ from .views.lieferant import LieferantViewSet
 from .views.rechnung import RechnungViewSet
 from .views.buchung import BuchungViewSet
 from .views.auswertung import AnlageVView, DeckungsbeitragView
+from .views.darlehen import DarlehenViewSet
+from .views.bodenrichtwert import BodenrichtwertViewSet
 
 DETAIL = {'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}
 
@@ -24,6 +26,10 @@ urlpatterns = [
     path('lieferanten/<int:pk>/', LieferantViewSet.as_view(DETAIL), name='lieferanten-detail'),
     path('rechnungen/', RechnungViewSet.as_view({'get': 'list', 'post': 'create'}), name='rechnungen-list'),
     path('rechnungen/<int:pk>/', RechnungViewSet.as_view(DETAIL), name='rechnungen-detail'),
+    path('darlehen/', DarlehenViewSet.as_view({'get': 'list', 'post': 'create'}), name='darlehen-list'),
+    path('darlehen/<int:pk>/', DarlehenViewSet.as_view(DETAIL), name='darlehen-detail'),
+    path('bodenrichtwerte/', BodenrichtwertViewSet.as_view({'get': 'list', 'post': 'create'}), name='bodenrichtwerte-list'),
+    path('bodenrichtwerte/<int:pk>/', BodenrichtwertViewSet.as_view(DETAIL), name='bodenrichtwerte-detail'),
     path('buchungen/', BuchungViewSet.as_view({'get': 'list'}), name='buchungen-list'),
     path('buchungen/import/', BuchungViewSet.as_view({'post': 'importieren'}), name='buchungen-import'),
     path('buchungen/<int:pk>/', BuchungViewSet.as_view({'patch': 'partial_update'}), name='buchungen-detail'),

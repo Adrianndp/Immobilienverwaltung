@@ -75,13 +75,17 @@ export interface Mietobjekt {
   tiefgarage: number
   carport: number
   stellplatz: number
+  // Sum over the Mietobjekt's Darlehen, null without Darlehen.
+  restschuld: string | null
+  // €/m², the entry with the newest datum, null without Bodenrichtwerte.
+  bodenrichtwert: string | null
 }
 
 export type MietobjektInput = Pick<
   Mietobjekt,
   'name' | 'strasse' | 'hausnummer' | 'plz' | 'ort' | 'objektart' | 'nutzung'
 > &
-  Partial<Omit<Mietobjekt, 'id'>>
+  Partial<Omit<Mietobjekt, 'id' | 'restschuld' | 'bodenrichtwert'>>
 
 export interface Einheit {
   id: number
@@ -203,6 +207,7 @@ export interface Zuordnung {
   betrag: string
   mietvertrag: number | null
   rechnung: number | null
+  darlehen: number | null
 }
 
 export interface Buchung {
@@ -249,3 +254,45 @@ export interface AnlageV {
   werbungskosten_summe: string
   ueberschuss: string
 }
+
+export type DarlehenArt = 'ANNUITAET' | 'TILGUNG'
+
+export const DARLEHEN_ART_LABELS: Record<DarlehenArt, string> = {
+  ANNUITAET: 'Annuitätendarlehen',
+  TILGUNG: 'Tilgungsdarlehen',
+}
+
+export interface Darlehen {
+  id: number
+  mietobjekt: number
+  mietobjekt_name: string
+  bank: string
+  iban: string
+  beginn: string
+  betrag: string
+  art: DarlehenArt
+  zinsbindung_bis: string | null
+  sollzins: string
+  tilgung: string
+  rate: string
+  restschuld: string
+  verlauf: { datum: string; rest: string }[]
+  zahlungen: { datum: string; betrag: string; betreff: string; bank: string; kontostand: string }[]
+}
+
+export type DarlehenInput = Pick<
+  Darlehen,
+  'mietobjekt' | 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
+>
+
+export interface Bodenrichtwert {
+  id: number
+  mietobjekt: number
+  datum: string
+  // €/m²
+  wert: string
+  // Grundstücksfläche (only the WEG share, if set) times wert; null without Grundstücksfläche.
+  grundstueckswert: string | null
+}
+
+export type BodenrichtwertInput = Pick<Bodenrichtwert, 'mietobjekt' | 'datum' | 'wert'>

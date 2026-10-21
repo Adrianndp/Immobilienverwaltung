@@ -112,12 +112,7 @@ function Auswertung({ mietobjekte }: { mietobjekte: Mietobjekt[] }) {
                 <Table size="small">
                   <TableBody>
                     <TableRow>
-                      <TableCell>
-                        1. Schuldzinsen, Geldbeschaffungskosten{' '}
-                        <Typography component="span" variant="body2" color="text.secondary">
-                          (Darlehen noch nicht erfasst)
-                        </Typography>
-                      </TableCell>
+                      <TableCell>1. Schuldzinsen, Geldbeschaffungskosten</TableCell>
                       <TableCell align="right">{formatEuro(data.schuldzinsen, 2)}</TableCell>
                     </TableRow>
                     <TableRow>

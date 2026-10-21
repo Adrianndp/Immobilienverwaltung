@@ -15,7 +15,7 @@ from .rechnung import lieferant_name
 class ZuordnungSerializer(serializers.ModelSerializer):
     class Meta:
         model = Zuordnung
-        fields = ["betrag", "mietvertrag", "rechnung"]
+        fields = ["betrag", "mietvertrag", "rechnung", "darlehen"]
 
     def validate_betrag(self, value):
         if value <= 0:
@@ -32,9 +32,15 @@ class ZuordnungSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Rechnung nicht gefunden.")
         return value
 
+    def validate_darlehen(self, value):
+        if value is not None and value.mietobjekt.eigentuemer_id != self.context["request"].user.id:
+            raise serializers.ValidationError("Darlehen nicht gefunden.")
+        return value
+
     def validate(self, data):
-        if (data.get("mietvertrag") is None) == (data.get("rechnung") is None):
-            raise serializers.ValidationError("Genau einen Mietvertrag oder eine Rechnung angeben.")
+        ziele = [data.get(feld) for feld in ("mietvertrag", "rechnung", "darlehen")]
+        if sum(ziel is not None for ziel in ziele) != 1:
+            raise serializers.ValidationError("Genau einen Mietvertrag, eine Rechnung oder ein Darlehen angeben.")
         return data
 
 
@@ -66,6 +72,8 @@ class BuchungSerializer(serializers.ModelSerializer):
                 namen.append(f"{z.mietvertrag.mieter.vorname} {z.mietvertrag.mieter.nachname}")
             elif z.rechnung:
                 namen.append(lieferant_name(z.rechnung.lieferant))
+            elif z.darlehen:
+                namen.append(z.darlehen.bank)
         # dict.fromkeys drops duplicates (e.g. two Rechnungen of the same Lieferant) but keeps the order.
         return ", ".join(dict.fromkeys(namen))
 
@@ -78,12 +86,14 @@ class BuchungSerializer(serializers.ModelSerializer):
             return data
 
         eingehend = self.instance.betrag > 0
-        if eingehend and any(z.get("rechnung") for z in zuordnungen):
+        if eingehend and any(z.get("rechnung") or z.get("darlehen") for z in zuordnungen):
             raise serializers.ValidationError(
                 {"zuordnungen": "Eingänge können nur Mietverträgen zugeordnet werden."}
             )
         if not eingehend and any(z.get("mietvertrag") for z in zuordnungen):
-            raise serializers.ValidationError({"zuordnungen": "Ausgänge können nur Rechnungen zugeordnet werden."})
+            raise serializers.ValidationError(
+                {"zuordnungen": "Ausgänge können nur Rechnungen oder Darlehen zugeordnet werden."}
+            )
         if sum(z["betrag"] for z in zuordnungen) > abs(self.instance.betrag):
             raise serializers.ValidationError(
                 {"zuordnungen": "Die Zuordnungen sind zusammen höher als der Buchungsbetrag."}
@@ -107,7 +117,9 @@ class BuchungViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.Ge
     def get_queryset(self):
         return (
             Buchung.objects.filter(eigentuemer=self.request.user)
-            .prefetch_related("zuordnungen__mietvertrag__mieter", "zuordnungen__rechnung__lieferant")
+            .prefetch_related(
+                "zuordnungen__mietvertrag__mieter", "zuordnungen__rechnung__lieferant", "zuordnungen__darlehen"
+            )
             .order_by("-buchungstag")
         )
 

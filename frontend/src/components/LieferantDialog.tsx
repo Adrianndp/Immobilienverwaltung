@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -11,6 +12,7 @@ import { validierungsFehler } from '../api/client'
 import { useCreateLieferant, useUpdateLieferant } from '../api/hooks'
 import type { Lieferant, LieferantInput } from '../api/types'
 import { laenderName } from '../format'
+import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 const LEER_LIEFERANT: LieferantInput = {
   firmenname: '',
@@ -33,6 +35,7 @@ interface Props {
 }
 
 function LieferantDialog({ lieferant, onClose, onSaved }: Props) {
+  const vollbild = useVollbild()
   const createLieferant = useCreateLieferant()
   const updateLieferant = useUpdateLieferant()
   // The form fields only, so the PATCH does not send the id.
@@ -84,8 +87,8 @@ function LieferantDialog({ lieferant, onClose, onSaved }: Props) {
   }
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md">
-      <form onSubmit={handleSubmit}>
+    <Dialog open onClose={onClose} fullWidth maxWidth="md" fullScreen={vollbild}>
+      <Box component="form" onSubmit={handleSubmit} sx={DIALOG_FORMULAR}>
         <DialogTitle>{lieferant ? 'Lieferant bearbeiten' : 'Lieferant anlegen'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ pt: 1 }}>
@@ -142,7 +145,7 @@ function LieferantDialog({ lieferant, onClose, onSaved }: Props) {
             Speichern
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   )
 }

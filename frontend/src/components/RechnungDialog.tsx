@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -17,6 +18,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
 import { useCreateRechnung, useKostenarten, useLieferanten, useMietobjekte } from '../api/hooks'
 import { lieferantName } from '../format'
+import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 type Feld = 'datum' | 'name' | 'rechnungsnummer' | 'betrag'
 
@@ -31,6 +33,7 @@ interface Props {
 }
 
 function RechnungDialog({ onClose, onSaved }: Props) {
+  const vollbild = useVollbild()
   const createRechnung = useCreateRechnung()
   const { data: kostenarten } = useKostenarten()
   const { data: lieferanten } = useLieferanten()
@@ -97,8 +100,8 @@ function RechnungDialog({ onClose, onSaved }: Props) {
   }
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md">
-      <form onSubmit={handleSubmit}>
+    <Dialog open onClose={onClose} fullWidth maxWidth="md" fullScreen={vollbild}>
+      <Box component="form" onSubmit={handleSubmit} sx={DIALOG_FORMULAR}>
         <DialogTitle>Rechnung anlegen</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 1 }}>
@@ -177,12 +180,18 @@ function RechnungDialog({ onClose, onSaved }: Props) {
               </Typography>
               <Stack spacing={2}>
                 {anteile.map((a, i) => (
-                  <Stack key={i} direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                  <Stack
+                    key={i}
+                    direction="row"
+                    useFlexGap
+                    sx={{ alignItems: 'flex-start', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}
+                  >
                     <TextField
                       select
                       label="Mietobjekt"
                       required
-                      fullWidth
+                      // Own line on phones, otherwise the select is squeezed to nothing.
+                      sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
                       value={mietobjekte?.length ? a.mietobjekt : ''}
                       onChange={(e) => setAnteil(i, { mietobjekt: Number(e.target.value) })}
                       error={!!fehler[`anteile.${i}.mietobjekt`]}
@@ -220,7 +229,11 @@ function RechnungDialog({ onClose, onSaved }: Props) {
                     </IconButton>
                   </Stack>
                 ))}
-                <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                <Stack
+                  direction="row"
+                  useFlexGap
+                  sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}
+                >
                   <Button
                     startIcon={<AddIcon />}
                     onClick={() => setAnteile((liste) => [...liste, { mietobjekt: '', prozent: '' }])}
@@ -242,7 +255,7 @@ function RechnungDialog({ onClose, onSaved }: Props) {
             Speichern
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   )
 }

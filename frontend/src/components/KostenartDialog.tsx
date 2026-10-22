@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -11,6 +12,7 @@ import { useState, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
 import { useCreateKostenart } from '../api/hooks'
 import { KATEGORIE_LABELS, type Kategorie } from '../api/types'
+import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 interface Props {
   onClose: () => void
@@ -18,6 +20,7 @@ interface Props {
 }
 
 function KostenartDialog({ onClose, onSaved }: Props) {
+  const vollbild = useVollbild()
   const createKostenart = useCreateKostenart()
   const [name, setName] = useState('')
   const [kategorie, setKategorie] = useState<Kategorie>('SONSTIGE')
@@ -55,8 +58,8 @@ function KostenartDialog({ onClose, onSaved }: Props) {
   }
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
-      <form onSubmit={handleSubmit}>
+    <Dialog open onClose={onClose} fullWidth maxWidth="sm" fullScreen={vollbild}>
+      <Box component="form" onSubmit={handleSubmit} sx={DIALOG_FORMULAR}>
         <DialogTitle>Kostenart anlegen</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
@@ -104,7 +107,7 @@ function KostenartDialog({ onClose, onSaved }: Props) {
             Speichern
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   )
 }

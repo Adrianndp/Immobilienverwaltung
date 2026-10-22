@@ -23,6 +23,7 @@ import { useBodenrichtwerte, useCreateBodenrichtwert, useDeleteBodenrichtwert } 
 import type { Bodenrichtwert, Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
 import { formatEuro, LEER } from '../format'
+import { useVollbild } from './dialog'
 
 // "270.00" -> "270,00 €/m²"
 function proQuadratmeter(wert: string) {
@@ -106,6 +107,7 @@ interface Props {
 }
 
 function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
+  const vollbild = useVollbild()
   const { data, loading, error, reload } = useBodenrichtwerte(mietobjekt.id)
   const createBodenrichtwert = useCreateBodenrichtwert()
   const deleteBodenrichtwert = useDeleteBodenrichtwert()
@@ -163,7 +165,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
   }
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="lg">
+    <Dialog open onClose={onClose} fullWidth maxWidth="lg" fullScreen={vollbild}>
       <DialogTitle>Bodenrichtwert – {mietobjekt.name}</DialogTitle>
       <DialogContent>
         {loading && <CircularProgress />}
@@ -172,7 +174,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
           <Stack spacing={3}>
             {allgemeinerFehler && <Alert severity="error">{allgemeinerFehler}</Alert>}
 
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'space-between' }}>
               <Kennzahl label="Aktueller Bodenrichtwert" wert={aktuell ? proQuadratmeter(aktuell.wert) : LEER} />
               <Kennzahl
                 label="Aktueller Grundstückswert"

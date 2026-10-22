@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -20,6 +21,7 @@ import { useDarlehen, useMietvertraege, useRechnungen, useZuordnenBuchung } from
 import type { Buchung, Zuordnung } from '../api/types'
 import { Zeile } from './InfoKarte'
 import { formatDatum, formatEuro } from '../format'
+import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 type ZielFeld = 'mietvertrag' | 'rechnung' | 'darlehen'
 
@@ -46,6 +48,7 @@ function cent(betrag: string) {
 }
 
 function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
+  const vollbild = useVollbild()
   const zuordnen = useZuordnenBuchung()
   const { data: mietvertraege } = useMietvertraege()
   const { data: rechnungen } = useRechnungen()
@@ -127,8 +130,8 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
   }
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md">
-      <form onSubmit={handleSubmit}>
+    <Dialog open onClose={onClose} fullWidth maxWidth="md" fullScreen={vollbild}>
+      <Box component="form" onSubmit={handleSubmit} sx={DIALOG_FORMULAR}>
         <DialogTitle>Buchung zuordnen</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 1 }}>
@@ -149,12 +152,18 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
                 const zielFehler =
                   fehler[`zuordnungen.${i}.${feld}`] ?? fehler[`zuordnungen.${i}.non_field_errors`]
                 return (
-                  <Stack key={i} direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                  <Stack
+                    key={i}
+                    direction="row"
+                    useFlexGap
+                    sx={{ alignItems: 'flex-start', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}
+                  >
                     <TextField
                       select
                       label={eingehend ? 'Mietvertrag' : 'Rechnung / Darlehen'}
                       required
-                      fullWidth
+                      // Own line on phones, otherwise the select is squeezed to nothing.
+                      sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
                       value={optionen?.length ? z.ziel : ''}
                       onChange={(e) => setZeile(i, { ziel: e.target.value })}
                       error={!!zielFehler}
@@ -183,7 +192,11 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
                   </Stack>
                 )
               })}
-              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <Stack
+                direction="row"
+                useFlexGap
+                sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}
+              >
                 <Button startIcon={<AddIcon />} onClick={() => setZeilen((liste) => [...liste, { ziel: '', betrag: '' }])}>
                   Zuordnung hinzufügen
                 </Button>
@@ -201,7 +214,7 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
             Speichern
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   )
 }

@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -19,6 +20,7 @@ import {
 } from '../api/hooks'
 import type { Mieter, Mietvertrag, MietvertragInput } from '../api/types'
 import { laenderName } from '../format'
+import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 type MieterFeld = Exclude<keyof Mieter, 'id'>
 type VertragFeld = 'beginn' | 'ende' | 'kaltmiete' | 'nebenkosten' | 'kaution'
@@ -102,6 +104,7 @@ interface Props {
 }
 
 function MietvertragDialog({ mietvertrag, onClose, onSaved }: Props) {
+  const vollbild = useVollbild()
   const createMietvertrag = useCreateMietvertrag()
   const updateMietvertrag = useUpdateMietvertrag()
   const { data: mietobjekte } = useMietobjekte()
@@ -170,8 +173,8 @@ function MietvertragDialog({ mietvertrag, onClose, onSaved }: Props) {
   }
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md">
-      <form onSubmit={handleSubmit}>
+    <Dialog open onClose={onClose} fullWidth maxWidth="md" fullScreen={vollbild}>
+      <Box component="form" onSubmit={handleSubmit} sx={DIALOG_FORMULAR}>
         <DialogTitle>{mietvertrag ? 'Mieter bearbeiten' : 'Mieter anlegen'}</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 1 }}>
@@ -280,7 +283,7 @@ function MietvertragDialog({ mietvertrag, onClose, onSaved }: Props) {
             {mietvertrag ? 'Speichern' : 'Anlegen'}
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   )
 }

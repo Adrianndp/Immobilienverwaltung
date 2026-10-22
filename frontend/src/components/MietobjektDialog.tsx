@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -16,6 +17,7 @@ import {
   type MietobjektInput,
   type Nutzung,
 } from '../api/types'
+import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 interface Props {
   open: boolean
@@ -24,6 +26,7 @@ interface Props {
 }
 
 function MietobjektDialog({ open, onClose, onCreated }: Props) {
+  const vollbild = useVollbild()
   const createMietobjekt = useCreateMietobjekt()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
@@ -52,8 +55,8 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
   }
 
   return (
-    <Dialog open={open} onClose={close} fullWidth maxWidth="sm">
-      <form onSubmit={handleSubmit}>
+    <Dialog open={open} onClose={close} fullWidth maxWidth="sm" fullScreen={vollbild}>
+      <Box component="form" onSubmit={handleSubmit} sx={DIALOG_FORMULAR}>
         <DialogTitle>Mietobjekt hinzufügen</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
@@ -66,7 +69,7 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
                 </MenuItem>
               ))}
             </TextField>
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 select
                 name="nutzung"
@@ -99,11 +102,11 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
                 </TextField>
               )}
             </Stack>
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField name="strasse" label="Straße" required fullWidth />
               <TextField name="hausnummer" label="Hausnummer" required />
             </Stack>
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 name="plz"
                 label="PLZ"
@@ -120,7 +123,7 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
             Speichern
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   )
 }

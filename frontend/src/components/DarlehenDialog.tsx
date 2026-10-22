@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
@@ -22,6 +23,7 @@ import { useCreateDarlehen, useDarlehen, useUpdateDarlehen } from '../api/hooks'
 import { DARLEHEN_ART_LABELS, type Darlehen, type Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
 import { formatEuro, LEER } from '../format'
+import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 type Feld = 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
 
@@ -102,7 +104,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Box component="form" onSubmit={handleSubmit} sx={DIALOG_FORMULAR}>
       <DialogContent>
         <Stack spacing={3}>
           {allgemeinerFehler && <Alert severity="error">{allgemeinerFehler}</Alert>}
@@ -239,7 +241,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
           Speichern
         </Button>
       </DialogActions>
-    </form>
+    </Box>
   )
 }
 
@@ -250,12 +252,13 @@ interface Props {
 }
 
 function DarlehenDialog({ mietobjekt, onClose, onSaved }: Props) {
+  const vollbild = useVollbild()
   const { data, loading, error, reload } = useDarlehen(mietobjekt.id)
   // One Darlehen per Mietobjekt in the popup: the first one.
   const darlehen = data?.[0]
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="lg">
+    <Dialog open onClose={onClose} fullWidth maxWidth="lg" fullScreen={vollbild}>
       <DialogTitle>Darlehen</DialogTitle>
       {loading && (
         <DialogContent>

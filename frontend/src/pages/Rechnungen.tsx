@@ -1,9 +1,4 @@
 import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogTitle from '@mui/material/DialogTitle'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
@@ -14,6 +9,7 @@ import type { Rechnung } from '../api/types'
 import RechnungDialog from '../components/RechnungDialog'
 import RechnungenTabelle from '../components/RechnungenTabelle'
 import Laden, { Ladefehler } from '../components/Laden'
+import LoeschenDialog from '../components/LoeschenDialog'
 import { useMeldung } from '../components/meldung'
 
 function Rechnungen() {
@@ -54,20 +50,15 @@ function Rechnungen() {
       </Stack>
       {dialogOpen && <RechnungDialog onClose={() => setDialogOpen(false)} onSaved={reload} />}
 
-      <Dialog open={!!zuLoeschen} onClose={() => setZuLoeschen(undefined)}>
-        <DialogTitle>Rechnung löschen?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            „{zuLoeschen?.name}“ ({zuLoeschen?.rechnungsnummer}) wird endgültig gelöscht.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setZuLoeschen(undefined)}>Abbrechen</Button>
-          <Button color="error" variant="contained" loading={loeschend} onClick={loeschen}>
-            Löschen
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <LoeschenDialog
+        offen={!!zuLoeschen}
+        titel="Rechnung löschen?"
+        loeschend={loeschend}
+        onAbbrechen={() => setZuLoeschen(undefined)}
+        onLoeschen={loeschen}
+      >
+        „{zuLoeschen?.name}“ ({zuLoeschen?.rechnungsnummer}) wird endgültig gelöscht.
+      </LoeschenDialog>
 
       {loading && <Laden />}
       {error && <Ladefehler text="Rechnungen konnten nicht geladen werden." error={error} />}

@@ -49,7 +49,7 @@ function RechnungenTabelle({ rechnungen, onDelete }: Props) {
               </TableCell>
               {onDelete && (
                 <TableCell padding="checkbox">
-                  <IconButton size="small" aria-label="Löschen" onClick={() => onDelete(r)}>
+                  <IconButton size="small" aria-label={`Rechnung ${r.rechnungsnummer} löschen`} onClick={() => onDelete(r)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </TableCell>

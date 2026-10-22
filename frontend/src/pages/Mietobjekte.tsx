@@ -32,7 +32,7 @@ function MietobjektKarte({ mietobjekt: m }: { mietobjekt: Mietobjekt }) {
       titel={m.name}
       farbe={m.farbe}
       aktion={
-        <IconButton component={Link} to={`/mietobjekte/${m.id}`} aria-label="Bearbeiten">
+        <IconButton component={Link} to={`/mietobjekte/${m.id}`} aria-label={`${m.name} bearbeiten`}>
           <EditIcon />
         </IconButton>
       }

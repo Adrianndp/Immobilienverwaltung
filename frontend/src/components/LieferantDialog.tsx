@@ -11,9 +11,9 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
 import { useCreateLieferant, useUpdateLieferant } from '../api/hooks'
 import type { Lieferant, LieferantInput } from '../api/types'
-import { laenderName } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
+import { laenderName } from '../format'
 
 const LEER_LIEFERANT: LieferantInput = {
   firmenname: '',

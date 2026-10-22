@@ -29,6 +29,7 @@ import {
   NUTZUNG_LABELS,
   OBJEKTART_LABELS,
   VERMIETUNG_LABELS,
+  type Einheit,
   type Mietobjekt,
   type Nutzung,
 } from '../api/types'
@@ -36,8 +37,9 @@ import BodenrichtwertDialog from '../components/BodenrichtwertDialog'
 import DarlehenDialog from '../components/DarlehenDialog'
 import FarbAuswahl from '../components/FarbAuswahl'
 import Laden, { Ladefehler } from '../components/Laden'
-import { dezimal, formatEuro, laenderName } from '../format'
+import LoeschenDialog from '../components/LoeschenDialog'
 import { useMeldung } from '../components/meldung'
+import { dezimal, formatEuro, laenderName } from '../format'
 
 type Feld = Exclude<keyof Mietobjekt, 'id'>
 type Fehler = Partial<Record<string, string[]>>
@@ -395,6 +397,8 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [fehler, setFehler] = useState<string>()
+  const [zuLoeschen, setZuLoeschen] = useState<Einheit>()
+  const [loeschend, setLoeschend] = useState(false)
 
   function fehlerText(e: unknown) {
     if (e instanceof ApiError && e.status === 400 && e.body && typeof e.body === 'object') {
@@ -419,14 +423,19 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete() {
+    if (!zuLoeschen) return
+    setLoeschend(true)
     setFehler(undefined)
     try {
-      await deleteEinheit(id)
+      await deleteEinheit(zuLoeschen.id)
       reload()
       meldung('Einheit gelöscht')
     } catch (e) {
       setFehler(fehlerText(e))
+    } finally {
+      setLoeschend(false)
+      setZuLoeschen(undefined)
     }
   }
 
@@ -444,7 +453,7 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
             key={e.id}
             disableGutters
             secondaryAction={
-              <IconButton edge="end" aria-label={`${e.name} löschen`} onClick={() => handleDelete(e.id)}>
+              <IconButton edge="end" aria-label={`Einheit ${e.name} löschen`} onClick={() => setZuLoeschen(e)}>
                 <DeleteIcon />
               </IconButton>
             }
@@ -453,8 +462,17 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
           </ListItem>
         ))}
       </List>
+      <LoeschenDialog
+        offen={!!zuLoeschen}
+        titel="Einheit löschen?"
+        loeschend={loeschend}
+        onAbbrechen={() => setZuLoeschen(undefined)}
+        onLoeschen={handleDelete}
+      >
+        „{zuLoeschen?.name}“ wird gelöscht.
+      </LoeschenDialog>
       <form onSubmit={handleAdd}>
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'flex-start' } }}>
           <TextField
             label="Neue Einheit"
             size="small"

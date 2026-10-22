@@ -22,9 +22,10 @@ import { useBodenrichtwerte, useCreateBodenrichtwert, useDeleteBodenrichtwert } 
 import type { Bodenrichtwert, Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
 import Laden, { Ladefehler } from './Laden'
-import { dezimal, formatEuro, LEER } from '../format'
+import LoeschenDialog from './LoeschenDialog'
 import { useVollbild } from './dialog'
 import { useMeldung } from './meldung'
+import { dezimal, formatDatum, formatEuro, LEER } from '../format'
 
 // "270.00" -> "270,00 €/m²"
 function proQuadratmeter(wert: string) {
@@ -118,6 +119,8 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
   const [fehler, setFehler] = useState<Record<string, string>>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()
   const [saving, setSaving] = useState(false)
+  const [zuLoeschen, setZuLoeschen] = useState<Bodenrichtwert>()
+  const [loeschend, setLoeschend] = useState(false)
 
   const aktuell = data?.[0]
 
@@ -156,15 +159,20 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete() {
+    if (!zuLoeschen) return
+    setLoeschend(true)
     setFehler({})
     setAllgemeinerFehler(undefined)
     try {
-      await deleteBodenrichtwert(id)
+      await deleteBodenrichtwert(zuLoeschen.id)
       geaendert()
       meldung('Bodenrichtwert gelöscht')
     } catch (e) {
       fehlerAnzeigen(e)
+    } finally {
+      setLoeschend(false)
+      setZuLoeschen(undefined)
     }
   }
 
@@ -241,7 +249,11 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
                         <TableCell align="right">{proQuadratmeter(b.wert)}</TableCell>
                         <TableCell align="right">{formatEuro(b.grundstueckswert, 2)}</TableCell>
                         <TableCell align="right">
-                          <IconButton size="small" aria-label="Löschen" onClick={() => handleDelete(b.id)}>
+                          <IconButton
+                            size="small"
+                            aria-label={`Bodenrichtwert vom ${formatDatum(b.datum)} löschen`}
+                            onClick={() => setZuLoeschen(b)}
+                          >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </TableCell>
@@ -257,6 +269,15 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
       <DialogActions>
         <Button onClick={onClose}>Schließen</Button>
       </DialogActions>
+      <LoeschenDialog
+        offen={!!zuLoeschen}
+        titel="Bodenrichtwert löschen?"
+        loeschend={loeschend}
+        onAbbrechen={() => setZuLoeschen(undefined)}
+        onLoeschen={handleDelete}
+      >
+        Der Wert vom {formatDatum(zuLoeschen?.datum ?? null)} wird gelöscht.
+      </LoeschenDialog>
     </Dialog>
   )
 }

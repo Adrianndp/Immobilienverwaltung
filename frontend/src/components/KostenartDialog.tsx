@@ -13,8 +13,8 @@ import { validierungsFehler } from '../api/client'
 import { useCreateKostenart } from '../api/hooks'
 import { KATEGORIE_LABELS, type Kategorie } from '../api/types'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
-import { dezimal } from '../format'
 import { useMeldung } from './meldung'
+import { dezimal } from '../format'
 
 interface Props {
   onClose: () => void

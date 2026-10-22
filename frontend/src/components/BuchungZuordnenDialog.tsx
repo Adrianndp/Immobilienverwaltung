@@ -20,9 +20,9 @@ import { validierungsFehler } from '../api/client'
 import { useDarlehen, useMietvertraege, useRechnungen, useZuordnenBuchung } from '../api/hooks'
 import type { Buchung, Zuordnung } from '../api/types'
 import { Zeile } from './InfoKarte'
-import { dezimal, formatDatum, formatEuro } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
+import { dezimal, formatDatum, formatEuro } from '../format'
 
 type ZielFeld = 'mietvertrag' | 'rechnung' | 'darlehen'
 

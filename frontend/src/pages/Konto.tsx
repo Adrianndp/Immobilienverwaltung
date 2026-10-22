@@ -16,8 +16,8 @@ import type { Buchung } from '../api/types'
 import BuchungZuordnenDialog from '../components/BuchungZuordnenDialog'
 import TabellenContainer, { DatumZelle } from '../components/Tabelle'
 import Laden, { Ladefehler } from '../components/Laden'
-import { formatEuro, oderLeer } from '../format'
 import { useMeldung } from '../components/meldung'
+import { formatDatum, formatEuro, oderLeer } from '../format'
 
 function Konto() {
   const meldung = useMeldung()
@@ -116,7 +116,11 @@ function Konto() {
                     <TableCell>{oderLeer(b.partner)}</TableCell>
                     <TableCell>{oderLeer(b.rechnungen)}</TableCell>
                     <TableCell padding="checkbox">
-                      <IconButton size="small" aria-label="Zuordnen" onClick={() => setZuzuordnen(b)}>
+                      <IconButton
+                        size="small"
+                        aria-label={`Buchung vom ${formatDatum(b.buchungstag)} zuordnen`}
+                        onClick={() => setZuzuordnen(b)}
+                      >
                         <AddLinkIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

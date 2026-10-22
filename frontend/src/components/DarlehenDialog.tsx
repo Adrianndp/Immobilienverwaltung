@@ -22,9 +22,9 @@ import { useCreateDarlehen, useDarlehen, useUpdateDarlehen } from '../api/hooks'
 import { DARLEHEN_ART_LABELS, type Darlehen, type Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
 import Laden, { Ladefehler } from './Laden'
-import { dezimal, formatEuro, LEER } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
+import { dezimal, formatEuro, LEER } from '../format'
 
 type Feld = 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
 

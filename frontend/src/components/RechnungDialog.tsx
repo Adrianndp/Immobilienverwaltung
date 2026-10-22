@@ -17,9 +17,9 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
 import { useCreateRechnung, useKostenarten, useLieferanten, useMietobjekte } from '../api/hooks'
-import { dezimal, lieferantName } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
+import { dezimal, lieferantName } from '../format'
 
 type Feld = 'datum' | 'name' | 'rechnungsnummer' | 'betrag'
 

@@ -35,7 +35,7 @@ function MietvertragKarte({ mietvertrag: mv, onEdit }: { mietvertrag: Mietvertra
       titel={`${p.vorname} ${p.nachname}`}
       farbe={mv.farbe}
       aktion={
-        <IconButton onClick={onEdit} aria-label="Bearbeiten">
+        <IconButton onClick={onEdit} aria-label={`${p.vorname} ${p.nachname} bearbeiten`}>
           <EditIcon />
         </IconButton>
       }

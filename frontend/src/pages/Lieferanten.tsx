@@ -16,7 +16,7 @@ import type { Lieferant } from '../api/types'
 import LieferantDialog from '../components/LieferantDialog'
 import TabellenContainer from '../components/Tabelle'
 import Laden, { Ladefehler } from '../components/Laden'
-import { oderLeer } from '../format'
+import { lieferantName, oderLeer } from '../format'
 
 function Lieferanten() {
   const { data: lieferanten, loading, error, reload } = useLieferanten()
@@ -73,7 +73,15 @@ function Lieferanten() {
                   key={l.id}
                   hover
                   onClick={() => navigate(`/kosten/lieferanten/${l.id}`)}
-                  sx={{ cursor: 'pointer' }}
+                  // Reachable with Tab and opened with Enter, like a link.
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.target === e.currentTarget) navigate(`/kosten/lieferanten/${l.id}`)
+                  }}
+                  sx={{
+                    cursor: 'pointer',
+                    '&:focus-visible': { outline: 2, outlineColor: 'primary.main', outlineOffset: -2 },
+                  }}
                 >
                   <TableCell>{oderLeer(l.firmenname)}</TableCell>
                   <TableCell>{oderLeer(l.vorname)}</TableCell>
@@ -88,7 +96,7 @@ function Lieferanten() {
                   <TableCell padding="none">
                     <IconButton
                       size="small"
-                      aria-label="Bearbeiten"
+                      aria-label={`${lieferantName(l)} bearbeiten`}
                       onClick={(e) => {
                         // Otherwise the row click also opens the detail page.
                         e.stopPropagation()

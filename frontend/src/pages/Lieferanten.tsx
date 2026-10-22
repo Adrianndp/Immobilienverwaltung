@@ -1,6 +1,7 @@
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
+import IconButton from '@mui/material/IconButton'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -11,26 +12,31 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
+import EditIcon from '@mui/icons-material/Edit'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useLieferanten } from '../api/hooks'
+import type { Lieferant } from '../api/types'
 import LieferantDialog from '../components/LieferantDialog'
 import { oderLeer } from '../format'
 
 function Lieferanten() {
   const { data: lieferanten, loading, error, reload } = useLieferanten()
-  const [dialogOpen, setDialogOpen] = useState(false)
+  // undefined: closed, null: create, Lieferant: edit.
+  const [dialog, setDialog] = useState<Lieferant | null>()
   const navigate = useNavigate()
 
   return (
     <Stack spacing={2}>
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4">Lieferanten</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialog(null)}>
           Anlegen
         </Button>
       </Stack>
-      {dialogOpen && <LieferantDialog onClose={() => setDialogOpen(false)} onSaved={reload} />}
+      {dialog !== undefined && (
+        <LieferantDialog lieferant={dialog ?? undefined} onClose={() => setDialog(undefined)} onSaved={reload} />
+      )}
 
       {loading && <CircularProgress />}
       {error && <Alert severity="error">Lieferanten konnten nicht geladen werden.</Alert>}
@@ -53,6 +59,7 @@ function Lieferanten() {
                 <TableCell>Land</TableCell>
                 <TableCell>E-Mail</TableCell>
                 <TableCell>Telefon</TableCell>
+                <TableCell />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -73,6 +80,19 @@ function Lieferanten() {
                   <TableCell>{l.land}</TableCell>
                   <TableCell>{oderLeer(l.email)}</TableCell>
                   <TableCell>{oderLeer(l.telefon)}</TableCell>
+                  <TableCell padding="none">
+                    <IconButton
+                      size="small"
+                      aria-label="Bearbeiten"
+                      onClick={(e) => {
+                        // Otherwise the row click also opens the detail page.
+                        e.stopPropagation()
+                        setDialog(l)
+                      }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

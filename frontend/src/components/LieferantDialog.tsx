@@ -8,8 +8,8 @@ import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
-import { useCreateLieferant } from '../api/hooks'
-import type { LieferantInput } from '../api/types'
+import { useCreateLieferant, useUpdateLieferant } from '../api/hooks'
+import type { Lieferant, LieferantInput } from '../api/types'
 import { laenderName } from '../format'
 
 const LEER_LIEFERANT: LieferantInput = {
@@ -26,13 +26,23 @@ const LEER_LIEFERANT: LieferantInput = {
 }
 
 interface Props {
+  // Without a Lieferant the dialog creates one.
+  lieferant?: Lieferant
   onClose: () => void
   onSaved: () => void
 }
 
-function LieferantDialog({ onClose, onSaved }: Props) {
+function LieferantDialog({ lieferant, onClose, onSaved }: Props) {
   const createLieferant = useCreateLieferant()
-  const [werte, setWerte] = useState(LEER_LIEFERANT)
+  const updateLieferant = useUpdateLieferant()
+  // The form fields only, so the PATCH does not send the id.
+  const [werte, setWerte] = useState(() =>
+    lieferant
+      ? (Object.fromEntries(
+          Object.keys(LEER_LIEFERANT).map((f) => [f, lieferant[f as keyof LieferantInput]]),
+        ) as LieferantInput)
+      : LEER_LIEFERANT,
+  )
   const [fehler, setFehler] = useState<Record<string, string>>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()
   const [saving, setSaving] = useState(false)
@@ -54,7 +64,8 @@ function LieferantDialog({ onClose, onSaved }: Props) {
     setFehler({})
     setAllgemeinerFehler(undefined)
     try {
-      await createLieferant(werte)
+      if (lieferant) await updateLieferant(lieferant.id, werte)
+      else await createLieferant(werte)
       onSaved()
       onClose()
     } catch (e) {
@@ -75,7 +86,7 @@ function LieferantDialog({ onClose, onSaved }: Props) {
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <form onSubmit={handleSubmit}>
-        <DialogTitle>Lieferant anlegen</DialogTitle>
+        <DialogTitle>{lieferant ? 'Lieferant bearbeiten' : 'Lieferant anlegen'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ pt: 1 }}>
             {allgemeinerFehler && (

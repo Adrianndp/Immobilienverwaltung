@@ -89,6 +89,11 @@ export function useCreateLieferant() {
   return (data: LieferantInput) => apiRequest<Lieferant>('POST', '/lieferanten/', data)
 }
 
+export function useUpdateLieferant() {
+  return (id: number, data: Partial<LieferantInput>) =>
+    apiRequest<Lieferant>('PATCH', `/lieferanten/${id}/`, data)
+}
+
 export function useRechnungen(lieferantId?: number) {
   const query = lieferantId === undefined ? '' : `?lieferant=${lieferantId}`
   return useApi<Rechnung[]>(`/rechnungen/${query}`)

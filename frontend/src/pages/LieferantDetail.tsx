@@ -1,4 +1,5 @@
 import Alert from '@mui/material/Alert'
+import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import Paper from '@mui/material/Paper'
@@ -11,10 +12,13 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import EditIcon from '@mui/icons-material/Edit'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useLieferant, useRechnungen } from '../api/hooks'
 import type { Rechnung } from '../api/types'
 import { Zeile } from '../components/InfoKarte'
+import LieferantDialog from '../components/LieferantDialog'
 import RechnungenTabelle from '../components/RechnungenTabelle'
 import { formatEuro, laenderName, lieferantName, oderLeer } from '../format'
 
@@ -30,7 +34,8 @@ function summeProJahr(rechnungen: Rechnung[]) {
 
 function LieferantDetail() {
   const id = Number(useParams().id)
-  const { data: lieferant, loading, error } = useLieferant(id)
+  const { data: lieferant, loading, error, reload } = useLieferant(id)
+  const [dialogOpen, setDialogOpen] = useState(false)
   const { data: rechnungen, loading: rechnungenLoading, error: rechnungenError } = useRechnungen(id)
 
   return (
@@ -40,7 +45,15 @@ function LieferantDetail() {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h4">{lieferant ? lieferantName(lieferant) : 'Lieferant'}</Typography>
+        {lieferant && (
+          <Button startIcon={<EditIcon />} onClick={() => setDialogOpen(true)}>
+            Bearbeiten
+          </Button>
+        )}
       </Stack>
+      {dialogOpen && lieferant && (
+        <LieferantDialog lieferant={lieferant} onClose={() => setDialogOpen(false)} onSaved={reload} />
+      )}
 
       {loading && <CircularProgress />}
       {error && <Alert severity="error">Lieferant konnte nicht geladen werden.</Alert>}

@@ -44,6 +44,7 @@ import {
   type Objektart,
   type Vermietung,
 } from '../api/types'
+import AnschaffungskostenDialog from '../components/AnschaffungskostenDialog'
 import BodenrichtwertDialog from '../components/BodenrichtwertDialog'
 import DarlehenDialog from '../components/DarlehenDialog'
 import FarbAuswahl from '../components/FarbAuswahl'
@@ -58,14 +59,7 @@ type Feld = Exclude<keyof Mietobjekt, 'id'>
 type Fehler = Partial<Record<string, string[]>>
 
 // How each input's string maps back to the API value. Fields not listed are plain strings.
-const DEZIMAL: Feld[] = [
-  'kaufpreis',
-  'grundschuld',
-  'marktwert',
-  'wohnflaeche',
-  'grundstuecksflaeche',
-  'weg_anteil',
-]
+const DEZIMAL: Feld[] = ['grundschuld', 'marktwert', 'wohnflaeche', 'grundstuecksflaeche', 'weg_anteil']
 const GANZZAHL_OPTIONAL: Feld[] = ['stockwerk', 'baujahr']
 const ANZAHL: Feld[] = [
   'zimmer',
@@ -157,12 +151,19 @@ function OeffnenFeld({ label, wert, helperText, ariaLabel, onOpen }: OeffnenFeld
 
 interface FormularProps {
   mietobjekt: Mietobjekt
+  onAnschaffungskosten: () => void
   onDarlehen: () => void
   onBodenrichtwert: () => void
   onGespeichert: () => void
 }
 
-function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert, onGespeichert }: FormularProps) {
+function MietobjektFormular({
+  mietobjekt,
+  onAnschaffungskosten,
+  onDarlehen,
+  onBodenrichtwert,
+  onGespeichert,
+}: FormularProps) {
   const meldung = useMeldung()
   const updateMietobjekt = useUpdateMietobjekt()
   const [gespeichert, setGespeichert] = useState(mietobjekt)
@@ -308,8 +309,15 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert, onGespei
               slotProps={{ inputLabel: { shrink: true } }}
             />
           </Zelle>
+          {/* From the props, not the form state, like Restschuld and Bodenrichtwert: it changes when the popup saves. */}
           <Zelle>
-            <TextField label="Kaufpreis (€)" {...feld('kaufpreis')} />
+            <OeffnenFeld
+              label="Kaufpreis"
+              wert={mietobjekt.kaufpreis ? formatEuro(mietobjekt.kaufpreis, 2) : 'Noch kein Kaufpreis – erfassen'}
+              helperText="Anschaffungskosten aufschlüsseln"
+              ariaLabel="Anschaffungskosten öffnen"
+              onOpen={onAnschaffungskosten}
+            />
           </Zelle>
           <Zelle>
             <TextField label="Marktwert (€)" {...feld('marktwert')} />
@@ -670,6 +678,7 @@ function Einheiten({ mietobjektId, vermietung }: { mietobjektId: number; vermiet
 function MietobjektDetail() {
   const id = Number(useParams().id)
   const { data: mietobjekt, loading, error, reload } = useMietobjekt(id)
+  const [anschaffungskostenOpen, setAnschaffungskostenOpen] = useState(false)
   const [darlehenOpen, setDarlehenOpen] = useState(false)
   const [bodenrichtwertOpen, setBodenrichtwertOpen] = useState(false)
 
@@ -689,12 +698,20 @@ function MietobjektDetail() {
           <MietobjektFormular
             key={mietobjekt.id}
             mietobjekt={mietobjekt}
+            onAnschaffungskosten={() => setAnschaffungskostenOpen(true)}
             onDarlehen={() => setDarlehenOpen(true)}
             onBodenrichtwert={() => setBodenrichtwertOpen(true)}
             onGespeichert={reload}
           />
           <Einheiten mietobjektId={mietobjekt.id} vermietung={mietobjekt.vermietung} />
           {/* Outside the form: React submit events would bubble through the Dialog's portal. */}
+          {anschaffungskostenOpen && (
+            <AnschaffungskostenDialog
+              mietobjekt={mietobjekt}
+              onClose={() => setAnschaffungskostenOpen(false)}
+              onSaved={reload}
+            />
+          )}
           {darlehenOpen && (
             <DarlehenDialog mietobjekt={mietobjekt} onClose={() => setDarlehenOpen(false)} onSaved={reload} />
           )}

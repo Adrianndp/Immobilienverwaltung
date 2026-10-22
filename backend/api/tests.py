@@ -8,6 +8,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient, APITestCase
 
 from .models import (
+    Anschaffungskosten,
     Buchung,
     Darlehen,
     Einheit,
@@ -315,3 +316,50 @@ class EinheitLoeschenTests(ApiTestCase):
         )
         liste = {e["id"]: e["hat_vertraege"] for e in self.client.get("/api/einheiten/").json()}
         self.assertTrue(liste[self.vertrag.einheit_id])
+
+
+class AnschaffungskostenTests(ApiTestCase):
+    def url(self, objekt=None):
+        return f"/api/mietobjekte/{(objekt or self.objekt).id}/anschaffungskosten/"
+
+    def put(self, **daten):
+        return self.client.put(self.url(), {"kaufpreis": "200000", **daten}, format="json")
+
+    def test_ohne_datensatz_alles_null(self):
+        self.objekt.kaufpreis = D("200000")
+        self.objekt.save()
+
+        antwort = self.client.get(self.url()).json()
+
+        self.assertEqual((antwort["kaufpreis"], antwort["notarkosten"]), ("200000.00", "0.00"))
+        self.assertEqual((antwort["gesamtkosten"], antwort["gesamtkosten_objekt"]), ("200000.00", "200000.00"))
+        self.assertFalse(Anschaffungskosten.objects.exists())
+
+    def test_put_speichert_kaufpreis_und_summen(self):
+        antwort = self.put(
+            kaufpreis="300000", grunderwerbsteuer="18000", abzug_inventar="2000", heizung="9000.50",
+            erschliessung="1000", anteil_grund_boden="80000",
+        )  # fmt: skip
+
+        self.assertEqual(antwort.status_code, 200)
+        daten = antwort.json()
+        self.assertEqual(daten["summe_anschaffung"], "316000.00")
+        self.assertEqual(daten["summe_herstellung"], "9000.50")
+        self.assertEqual(daten["summe_nachtraeglich"], "1000.00")
+        self.assertEqual(daten["gesamtkosten"], "326000.50")
+        self.assertEqual(daten["gesamtkosten_objekt"], "246000.50")
+        self.objekt.refresh_from_db()
+        self.assertEqual(self.objekt.kaufpreis, D("300000"))
+        # A second PUT changes the same record.
+        self.assertEqual(self.put(heizung="0").json()["summe_herstellung"], "0.00")
+        self.assertEqual(Anschaffungskosten.objects.count(), 1)
+
+    def test_validierung(self):
+        self.assertIn("maler", self.put(maler="-1").json())
+        self.assertIn("anteil_grund_boden", self.put(anteil_grund_boden="200000.01").json())
+        self.assertEqual(self.put(anteil_grund_boden="200000").status_code, 200)
+
+    def test_fremdes_mietobjekt(self):
+        fremd = mietobjekt(User.objects.create_user("andere"))
+
+        self.assertEqual(self.client.get(self.url(fremd)).status_code, 404)

@@ -74,6 +74,54 @@ class Mietobjekt(models.Model):
     stellplatz = models.PositiveSmallIntegerField(default=0)
 
 
+def betragsfeld():
+    return models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+
+class Anschaffungskosten(models.Model):
+    """Breakdown of the Kaufpreis popup. The Kaufpreis itself stays Mietobjekt.kaufpreis."""
+
+    # The groups of the sums; same lists in the frontend's AnschaffungskostenDialog.
+    NEBENKOSTEN = ["gebuehren", "vormerkung", "grundbuchauszug", "grunderwerbsteuer", "notarkosten", "maklerprovision"]
+    ABZUEGE = ["abzug_instandhaltungsruecklage", "abzug_inventar"]
+    HERSTELLUNGSKOSTEN = [
+        "einstellplaetze", "anschlusskosten", "architekt", "bauarbeiten", "baumaterial", "bodenbelaege", "taefelung",
+        "elektro", "fenster", "garten", "heizung", "maler", "sanitaer", "umzaeunung", "sonstiges",
+    ]  # fmt: skip
+    NACHTRAEGLICH = ["erschliessung"]
+    BETRAEGE = NEBENKOSTEN + ABZUEGE + HERSTELLUNGSKOSTEN + NACHTRAEGLICH + ["anteil_grund_boden"]
+
+    mietobjekt = models.OneToOneField(Mietobjekt, on_delete=models.CASCADE, related_name="anschaffungskosten")
+    # Anschaffungsnebenkosten
+    gebuehren = betragsfeld()
+    vormerkung = betragsfeld()
+    grundbuchauszug = betragsfeld()
+    grunderwerbsteuer = betragsfeld()
+    notarkosten = betragsfeld()
+    maklerprovision = betragsfeld()
+    abzug_instandhaltungsruecklage = betragsfeld()
+    abzug_inventar = betragsfeld()
+    # Herstellungskosten
+    einstellplaetze = betragsfeld()
+    anschlusskosten = betragsfeld()
+    architekt = betragsfeld()
+    bauarbeiten = betragsfeld()
+    baumaterial = betragsfeld()
+    bodenbelaege = betragsfeld()
+    taefelung = betragsfeld()
+    elektro = betragsfeld()
+    fenster = betragsfeld()
+    garten = betragsfeld()
+    heizung = betragsfeld()
+    maler = betragsfeld()
+    sanitaer = betragsfeld()
+    umzaeunung = betragsfeld()
+    sonstiges = betragsfeld()
+    # Nachträgliche Anschaffungs- oder Herstellungskosten
+    erschliessung = betragsfeld()
+    anteil_grund_boden = betragsfeld()
+
+
 class Einheit(models.Model):
     mietobjekt = models.ForeignKey(Mietobjekt, on_delete=models.CASCADE, related_name="einheiten")
     name = models.CharField(max_length=100)

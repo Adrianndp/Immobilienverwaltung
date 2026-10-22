@@ -6,8 +6,11 @@ from django.db.models import F, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce, Round
 from django.utils import timezone
 from rest_framework import permissions, serializers, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from ..models import Mietobjekt, RechnungsAnteil, Zuordnung
+from ..models import Anschaffungskosten, Mietobjekt, RechnungsAnteil, Zuordnung
+from .anschaffungskosten import AnschaffungskostenSerializer
 
 GELD = models.DecimalField(max_digits=12, decimal_places=2)
 
@@ -138,3 +141,19 @@ class MietobjektViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save()
         serializer.instance = self.get_queryset().get(pk=serializer.instance.pk)
+
+    @action(detail=True, methods=["get", "put"])
+    def anschaffungskosten(self, request, pk=None):
+        # get_object() limits it to the user's Mietobjekte.
+        mietobjekt = self.get_object()
+        try:
+            kosten = mietobjekt.anschaffungskosten
+        except Anschaffungskosten.DoesNotExist:
+            # Not saved on GET: all zeros until the first PUT.
+            kosten = Anschaffungskosten(mietobjekt=mietobjekt)
+        if request.method == "GET":
+            return Response(AnschaffungskostenSerializer(kosten).data)
+        serializer = AnschaffungskostenSerializer(kosten, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

@@ -98,6 +98,45 @@ export type MietobjektInput = Pick<
 > &
   Partial<Omit<Mietobjekt, 'id' | 'restschuld' | 'bodenrichtwert'>>
 
+// The amounts of the Kaufpreis popup. kaufpreis is Mietobjekt.kaufpreis; the others are "0.00" until entered.
+export interface AnschaffungskostenInput {
+  kaufpreis: string | null
+  gebuehren: string
+  vormerkung: string
+  grundbuchauszug: string
+  grunderwerbsteuer: string
+  notarkosten: string
+  maklerprovision: string
+  abzug_instandhaltungsruecklage: string
+  abzug_inventar: string
+  einstellplaetze: string
+  anschlusskosten: string
+  architekt: string
+  bauarbeiten: string
+  baumaterial: string
+  bodenbelaege: string
+  taefelung: string
+  elektro: string
+  fenster: string
+  garten: string
+  heizung: string
+  maler: string
+  sanitaer: string
+  umzaeunung: string
+  sonstiges: string
+  erschliessung: string
+  anteil_grund_boden: string
+}
+
+// Computed by the API, the same way the popup computes them while typing.
+export interface Anschaffungskosten extends AnschaffungskostenInput {
+  summe_anschaffung: string
+  summe_herstellung: string
+  summe_nachtraeglich: string
+  gesamtkosten: string
+  gesamtkosten_objekt: string
+}
+
 export interface Einheit {
   id: number
   mietobjekt: number

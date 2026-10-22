@@ -17,6 +17,11 @@ DETAIL = {'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete
 urlpatterns = [
     path('mietobjekte/', MietobjektViewSet.as_view({'get': 'list', 'post': 'create'}), name='mietobjekte-list'),
     path('mietobjekte/<int:pk>/', MietobjektViewSet.as_view(DETAIL), name='mietobjekte-detail'),
+    path(
+        'mietobjekte/<int:pk>/anschaffungskosten/',
+        MietobjektViewSet.as_view({'get': 'anschaffungskosten', 'put': 'anschaffungskosten'}),
+        name='mietobjekte-anschaffungskosten',
+    ),
     path('einheiten/', EinheitViewSet.as_view({'get': 'list', 'post': 'create'}), name='einheiten-list'),
     path('einheiten/<int:pk>/', EinheitViewSet.as_view(DETAIL), name='einheiten-detail'),
     path('mietvertraege/', MietvertragViewSet.as_view({'get': 'list', 'post': 'create'}), name='mietvertraege-list'),

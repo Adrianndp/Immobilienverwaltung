@@ -1,6 +1,8 @@
 import { apiRequest, apiUpload, useApi } from './client'
 import type {
   AnlageV,
+  Anschaffungskosten,
+  AnschaffungskostenInput,
   Anmeldedaten,
   Anmeldestatus,
   Benutzer,
@@ -64,6 +66,17 @@ export function useCreateMietobjekt() {
 export function useUpdateMietobjekt() {
   return (id: number, data: Partial<MietobjektInput>) =>
     apiRequest<Mietobjekt>('PATCH', `/mietobjekte/${id}/`, data)
+}
+
+// Zeros if none were entered yet.
+export function useAnschaffungskosten(mietobjektId: number) {
+  return useApi<Anschaffungskosten>(`/mietobjekte/${mietobjektId}/anschaffungskosten/`)
+}
+
+// Also saves the Mietobjekt's kaufpreis.
+export function useUpdateAnschaffungskosten() {
+  return (mietobjektId: number, data: AnschaffungskostenInput) =>
+    apiRequest<Anschaffungskosten>('PUT', `/mietobjekte/${mietobjektId}/anschaffungskosten/`, data)
 }
 
 export function useCreateEinheit() {

@@ -18,7 +18,12 @@ import Typography from '@mui/material/Typography'
 import { LineChart } from '@mui/x-charts/LineChart'
 import { useState, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
-import { useBodenrichtwerte, useCreateBodenrichtwert, useDeleteBodenrichtwert } from '../api/hooks'
+import {
+  useAnschaffungskosten,
+  useBodenrichtwerte,
+  useCreateBodenrichtwert,
+  useDeleteBodenrichtwert,
+} from '../api/hooks'
 import type { Bodenrichtwert, Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
 import Laden, { Ladefehler } from './Laden'
@@ -49,18 +54,32 @@ function Kennzahl({ label, wert }: { label: string; wert: string }) {
   )
 }
 
-function Verlauf({ werte }: { werte: Bodenrichtwert[] }) {
-  // The list comes newest first, the chart runs from old to new.
-  const aufsteigend = [...werte].reverse()
-  const mitGrundstueckswert = werte.some((w) => w.grundstueckswert !== null)
+const KAUF = 'Kauf (Anteil Grund und Boden)'
+
+// A row of the table and a point of the chart: an entered Bodenrichtwert, or (without one) the Kauf
+// with the Anteil Grund und Boden from the Kaufpreis popup as Grundstückswert.
+interface Punkt {
+  datum: string | null
+  bodenrichtwert?: Bodenrichtwert
+  grundstueckswert: string | null
+}
+
+function Verlauf({ punkte }: { punkte: Punkt[] }) {
+  // The list comes newest first, the chart runs from old to new. Without a Kaufdatum the Kauf has no place on it.
+  const aufsteigend = punkte.filter((p) => p.datum !== null).reverse()
+  const mitGrundstueckswert = aufsteigend.some((p) => p.grundstueckswert !== null)
 
   return (
     <LineChart
       xAxis={[
         {
-          data: aufsteigend.map((w) => alsDatum(w.datum)),
+          data: aufsteigend.map((p) => alsDatum(p.datum!)),
           scaleType: 'time',
-          valueFormatter: (d: Date) => `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`,
+          valueFormatter: (d: Date, context) => {
+            const monat = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+            const kauf = aufsteigend.some((p) => !p.bodenrichtwert && alsDatum(p.datum!).getTime() === d.getTime())
+            return context.location === 'tooltip' && kauf ? `${monat} – ${KAUF}` : monat
+          },
         },
       ]}
       yAxis={[
@@ -82,7 +101,9 @@ function Verlauf({ werte }: { werte: Bodenrichtwert[] }) {
           yAxisId: 'bodenrichtwert',
           // Values only change at the entered dates, so no smoothing between them.
           curve: 'linear',
-          data: aufsteigend.map((w) => Number(w.wert)),
+          data: aufsteigend.map((p) => (p.bodenrichtwert ? Number(p.bodenrichtwert.wert) : null)),
+          // The Kauf has no Bodenrichtwert; the line goes on past it.
+          connectNulls: true,
           valueFormatter: (v) => (v === null ? LEER : proQuadratmeter(String(v))),
         },
         ...(mitGrundstueckswert
@@ -91,7 +112,7 @@ function Verlauf({ werte }: { werte: Bodenrichtwert[] }) {
                 label: 'Grundstückswert',
                 yAxisId: 'grundstueckswert',
                 curve: 'linear' as const,
-                data: aufsteigend.map((w) => (w.grundstueckswert === null ? null : Number(w.grundstueckswert))),
+                data: aufsteigend.map((p) => (p.grundstueckswert === null ? null : Number(p.grundstueckswert))),
                 valueFormatter: (v: number | null) => (v === null ? LEER : formatEuro(String(v), 2)),
               },
             ]
@@ -112,6 +133,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
   const meldung = useMeldung()
   const vollbild = useVollbild()
   const { data, loading, error, reload } = useBodenrichtwerte(mietobjekt.id)
+  const { data: kosten, loading: kostenLaden, error: kostenFehler } = useAnschaffungskosten(mietobjekt.id)
   const createBodenrichtwert = useCreateBodenrichtwert()
   const deleteBodenrichtwert = useDeleteBodenrichtwert()
   const [datum, setDatum] = useState('')
@@ -123,6 +145,13 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
   const [loeschend, setLoeschend] = useState(false)
 
   const aktuell = data?.[0]
+  // Newest first, like the Bodenrichtwerte; a Kauf without Kaufdatum goes last.
+  const punkte: Punkt[] = [
+    ...(data ?? []).map((b) => ({ datum: b.datum, bodenrichtwert: b, grundstueckswert: b.grundstueckswert })),
+    ...(kosten && Number(kosten.anteil_grund_boden) > 0
+      ? [{ datum: mietobjekt.kaufdatum, grundstueckswert: kosten.anteil_grund_boden }]
+      : []),
+  ].sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? ''))
 
   function fehlerAnzeigen(e: unknown) {
     const felder = validierungsFehler(e)
@@ -180,9 +209,12 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
     <Dialog open onClose={onClose} fullWidth maxWidth="lg" fullScreen={vollbild}>
       <DialogTitle>Bodenrichtwert – {mietobjekt.name}</DialogTitle>
       <DialogContent>
-        {loading && <Laden />}
+        {(loading || kostenLaden) && <Laden />}
         {error && <Ladefehler text="Bodenrichtwerte konnten nicht geladen werden." error={error} />}
-        {data && (
+        {kostenFehler && (
+          <Ladefehler text="Anschaffungskosten konnten nicht geladen werden." error={kostenFehler} />
+        )}
+        {data && !kostenLaden && (
           <Stack spacing={3}>
             {allgemeinerFehler && <Alert severity="error">{allgemeinerFehler}</Alert>}
 
@@ -200,7 +232,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
               </Alert>
             )}
 
-            {data.length > 0 && <Verlauf werte={data} />}
+            {punkte.some((p) => p.datum !== null) && <Verlauf punkte={punkte} />}
 
             <form onSubmit={handleAdd}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start' }}>
@@ -229,7 +261,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
               </Stack>
             </form>
 
-            {data.length === 0 ? (
+            {punkte.length === 0 ? (
               <Typography color="text.secondary">Noch keine Bodenrichtwerte erfasst.</Typography>
             ) : (
               <TabellenContainer>
@@ -243,19 +275,24 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {data.map((b) => (
-                      <TableRow key={b.id}>
-                        <DatumZelle wert={b.datum} />
-                        <TableCell align="right">{proQuadratmeter(b.wert)}</TableCell>
-                        <TableCell align="right">{formatEuro(b.grundstueckswert, 2)}</TableCell>
+                    {punkte.map(({ datum, bodenrichtwert: b, grundstueckswert }) => (
+                      <TableRow key={b?.id ?? 'kauf'}>
+                        <DatumZelle wert={datum} />
+                        <TableCell align="right" sx={{ color: b ? undefined : 'text.secondary' }}>
+                          {b ? proQuadratmeter(b.wert) : KAUF}
+                        </TableCell>
+                        <TableCell align="right">{formatEuro(grundstueckswert, 2)}</TableCell>
+                        {/* The Kauf is changed in the Kaufpreis popup. */}
                         <TableCell align="right">
-                          <IconButton
-                            size="small"
-                            aria-label={`Bodenrichtwert vom ${formatDatum(b.datum)} löschen`}
-                            onClick={() => setZuLoeschen(b)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                          {b && (
+                            <IconButton
+                              size="small"
+                              aria-label={`Bodenrichtwert vom ${formatDatum(b.datum)} löschen`}
+                              onClick={() => setZuLoeschen(b)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

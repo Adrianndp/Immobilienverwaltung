@@ -8,6 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from ...models import (
+    Anschaffungskosten,
     Bodenrichtwert,
     Buchung,
     Darlehen,
@@ -85,6 +86,44 @@ BODENRICHTWERTE = {
     "wg": [(2020, "700"), (2022, "790"), (2024, "840")],
     "see": [(2020, "560"), (2022, "640"), (2024, "690")],
 }
+
+# The Kaufpreis is on the Mietobjekt. Grunderwerbsteuer 6 %, Notar 1.5 %, Makler 3.57 % of it; anteil_grund_boden is
+# the plot area (WEG share for flats) times about the Bodenrichtwert at the Kaufdatum.
+ANSCHAFFUNGSKOSTEN = {
+    "linden": dict(
+        gebuehren=D("1140"), vormerkung=D("285"), grundbuchauszug=D("20"), grunderwerbsteuer=D("17100"),
+        notarkosten=D("4275"), maklerprovision=D("10174.50"),
+        abzug_instandhaltungsruecklage=D("4200"), abzug_inventar=D("3500"),
+        # 1240 m² * 31.40/1000 * 2600 €/m²
+        anteil_grund_boden=D("101200"),
+    ),
+    "garten": dict(
+        gebuehren=D("2160"), vormerkung=D("540"), grundbuchauszug=D("20"), grunderwerbsteuer=D("43200"),
+        notarkosten=D("10800"), maklerprovision=D("25704"),
+        # Built 1965: heating, windows and wiring renewed right after the purchase.
+        elektro=D("9600"), fenster=D("24800"), heizung=D("18500"), sanitaer=D("14200"), maler=D("6400"),
+        bodenbelaege=D("8900"),
+        erschliessung=D("3850"),
+        # 540 m² * 130 €/m²
+        anteil_grund_boden=D("70200"),
+    ),
+    "wg": dict(
+        gebuehren=D("630"), vormerkung=D("105"), grundbuchauszug=D("20"), grunderwerbsteuer=D("12600"),
+        notarkosten=D("3150"), maklerprovision=D("7497"),
+        abzug_instandhaltungsruecklage=D("2600"),
+        # Built 1972.
+        elektro=D("3400"), maler=D("2100"), bodenbelaege=D("4200"),
+        # 980 m² * 6.20/100 * 790 €/m²
+        anteil_grund_boden=D("48000"),
+    ),
+    "see": dict(
+        gebuehren=D("1485"), vormerkung=D("250"), grundbuchauszug=D("20"), grunderwerbsteuer=D("29700"),
+        notarkosten=D("7425"), maklerprovision=D("17671.50"),
+        abzug_inventar=D("2500"),
+        # 620 m² * 480 €/m²
+        anteil_grund_boden=D("297600"),
+    ),
+}  # fmt: skip
 
 DARLEHEN = [
     dict(
@@ -337,6 +376,8 @@ class Command(BaseCommand):
         for key, werte in BODENRICHTWERTE.items():
             for jahr, wert in werte:
                 Bodenrichtwert.objects.create(mietobjekt=mietobjekte[key], datum=date(jahr, 1, 1), wert=D(wert))
+        for key, daten in ANSCHAFFUNGSKOSTEN.items():
+            Anschaffungskosten.objects.create(mietobjekt=mietobjekte[key], **daten)
         darlehen = [
             Darlehen.objects.create(**{**daten, "mietobjekt": mietobjekte[daten["mietobjekt"]]}) for daten in DARLEHEN
         ]

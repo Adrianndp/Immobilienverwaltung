@@ -26,6 +26,9 @@ import { MIETVERTRAG_STATUS_LABELS, mietvertragStatus, type MietvertragStatus } 
 
 export const SIDEBAR_WIDTH = 240
 
+// Touch screens get 44px rows; with a mouse the dense rows stay as they are.
+const TOUCH_ZEILE = { '@media (pointer: coarse)': { minHeight: 44 } }
+
 interface NavItem {
   label: string
   to: string
@@ -81,7 +84,13 @@ function istAktiv(to: string, pathname: string, status: MietvertragStatus) {
   return linkStatus === null || linkStatus === status
 }
 
-function Sidebar() {
+interface Props {
+  // Below md the sidebar is a temporary drawer, opened from the top bar.
+  mobilOffen: boolean
+  onMobilSchliessen: () => void
+}
+
+function Sidebar({ mobilOffen, onMobilSchliessen }: Props) {
   const { pathname, search } = useLocation()
   const [searchParams] = useSearchParams()
   const status = mietvertragStatus(searchParams.get('status'))
@@ -104,15 +113,8 @@ function Sidebar() {
     })
   }
 
-  return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: SIDEBAR_WIDTH,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH },
-      }}
-    >
+  const inhalt = (
+    <>
       <Toolbar>
         <Typography variant="h6" noWrap>
           Hallo, Adrian!
@@ -122,7 +124,7 @@ function Sidebar() {
         {items.map(({ label, to, icon, unterpunkte }) =>
           unterpunkte ? (
             <Fragment key={to}>
-              <ListItemButton onClick={() => umschalten(to)}>
+              <ListItemButton onClick={() => umschalten(to)} aria-expanded={offen.has(to)}>
                 <ListItemIcon>{icon}</ListItemIcon>
                 <ListItemText
                   primary={label}
@@ -139,8 +141,9 @@ function Sidebar() {
                       component={Link}
                       to={u.to}
                       selected={istAktiv(u.to, pathname, status)}
+                      onClick={onMobilSchliessen}
                       dense
-                      sx={{ pl: 4 }}
+                      sx={{ pl: 4, ...TOUCH_ZEILE }}
                     >
                       <ListItemIcon sx={{ minWidth: 32 }}>{u.icon}</ListItemIcon>
                       <ListItemText primary={u.label} slotProps={{ primary: { variant: 'body2' } }} />
@@ -150,14 +153,45 @@ function Sidebar() {
               </Collapse>
             </Fragment>
           ) : (
-            <ListItemButton key={to} component={Link} to={to} selected={istAktiv(to, pathname, status)}>
+            <ListItemButton
+              key={to}
+              component={Link}
+              to={to}
+              selected={istAktiv(to, pathname, status)}
+              onClick={onMobilSchliessen}
+            >
               <ListItemIcon>{icon}</ListItemIcon>
               <ListItemText primary={label} />
             </ListItemButton>
           ),
         )}
       </List>
-    </Drawer>
+    </>
+  )
+
+  return (
+    <>
+      <Drawer
+        variant="temporary"
+        open={mobilOffen}
+        onClose={onMobilSchliessen}
+        ModalProps={{ keepMounted: true }}
+        sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH } }}
+      >
+        {inhalt}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          width: SIDEBAR_WIDTH,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH },
+        }}
+      >
+        {inhalt}
+      </Drawer>
+    </>
   )
 }
 

@@ -40,7 +40,7 @@ function LieferantDetail() {
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+      <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
         <IconButton component={Link} to="/kosten/lieferanten" aria-label="Zurück">
           <ArrowBackIcon />
         </IconButton>

@@ -96,7 +96,7 @@ function Mieter() {
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <Stack direction="row" useFlexGap sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h4">Mieter</Typography>
         {anlegen}
       </Stack>

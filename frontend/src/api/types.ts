@@ -1,6 +1,7 @@
 // DRF sends decimals as strings.
 
-export type Objektart = 'ETW' | 'EFH' | 'MFH' | 'GEW' | 'SON'
+export type Objektart = 'EFH' | 'EFE' | 'ZFH' | 'RMH' | 'REH' | 'MFH' | 'ETW' | 'DHH'
+export type WegNenner = 100 | 1000
 export type Nutzung = 'EIGEN' | 'VERMIETUNG'
 export type Vermietung = 'GANZ' | 'TEILE'
 export type Farbe =
@@ -15,12 +16,19 @@ export type Farbe =
 
 // Labels of the Django TextChoices; the serializers send only the values.
 export const OBJEKTART_LABELS: Record<Objektart, string> = {
-  ETW: 'Eigentumswohnung',
   EFH: 'Einfamilienhaus',
+  EFE: 'Einfamilienhaus mit Einliegerwohnung',
+  ZFH: 'Zweifamilienhaus',
+  RMH: 'Reihenmittelhaus',
+  REH: 'Reihenendhaus',
   MFH: 'Mehrfamilienhaus',
-  GEW: 'Gewerbe',
-  SON: 'Sonstiges',
+  ETW: 'Eigentumswohnung',
+  DHH: 'Doppelhaushälfte',
 }
+
+// Objektarten with a WEG-Anteil; for the others it is hidden and sent as null.
+// Same list as Mietobjekt.WEG_OBJEKTARTEN in the backend.
+export const WEG_OBJEKTARTEN: Objektart[] = ['EFE', 'RMH', 'REH', 'MFH', 'ETW', 'DHH']
 
 export const NUTZUNG_LABELS: Record<Nutzung, string> = {
   EIGEN: 'Eigennutzung',
@@ -64,7 +72,7 @@ export interface Mietobjekt {
   stockwerk: number | null
   baujahr: number | null
   weg_anteil: string | null
-  weg_nenner: 100 | 1000 | null
+  weg_nenner: WegNenner | null
   zimmer: number
   baeder: number
   kueche: number
@@ -80,7 +88,8 @@ export interface Mietobjekt {
   // €/m², the entry with the newest datum, null without Bodenrichtwerte.
   bodenrichtwert: string | null
   // Zuordnungen to its Mietverträge minus its share of all Rechnungen.
-  erwirtschafteter_betrag: string
+  // Last 12 months; null for Eigennutzung.
+  erwirtschafteter_betrag: string | null
 }
 
 export type MietobjektInput = Pick<

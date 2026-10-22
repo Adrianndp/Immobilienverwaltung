@@ -1,9 +1,10 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal as D
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient, APITestCase
 
 from .models import (
@@ -18,6 +19,7 @@ from .models import (
     RechnungsAnteil,
     Zuordnung,
 )
+from .views.mietobjekt import letzte_12_monate
 
 User = get_user_model()
 
@@ -231,3 +233,49 @@ class AnmeldenTests(TestCase):
 
     def test_ohne_csrf_token_abgelehnt(self):
         self.assertEqual(self.anmelden("geheim-123", mit_token=False).status_code, 403)
+
+
+class ErwirtschafteterBetragTests(ApiTestCase):
+    def betrag(self):
+        return self.client.get(f"/api/mietobjekte/{self.objekt.id}/").json()["erwirtschafteter_betrag"]
+
+    def test_miete_minus_kosten_minus_zinsen_der_letzten_12_monate(self):
+        heute = timezone.localdate()
+        for tag in (heute - timedelta(days=400), heute - timedelta(days=30)):
+            self.buchung("1000", tag=tag).zuordnungen.create(betrag=D("1000"), mietvertrag=self.vertrag)
+        self.rechnung.datum = heute - timedelta(days=30)
+        self.rechnung.save()
+        d = darlehen(self.objekt)
+
+        # Only the recent rent, minus 50 % of the 400 € Rechnung, minus the interest of the period.
+        self.assertEqual(D(self.betrag()), D("1000") - D("200") - d.zinsen(*letzte_12_monate()))
+
+    def test_eigennutzung_hat_keinen_betrag(self):
+        self.objekt.nutzung = Mietobjekt.Nutzung.EIGEN
+        self.objekt.save()
+
+        self.assertIsNone(self.betrag())
+
+
+class WegAnteilTests(ApiTestCase):
+    def patch(self, **daten):
+        return self.client.patch(f"/api/mietobjekte/{self.objekt.id}/", daten, format="json")
+
+    def test_ohne_weg_objektart_wird_der_anteil_geleert(self):
+        antwort = self.patch(objektart="ZFH")
+
+        self.assertEqual(antwort.status_code, 200)
+        self.assertEqual((antwort.json()["weg_anteil"], antwort.json()["weg_nenner"]), (None, None))
+
+    def test_neues_efh_speichert_keinen_anteil(self):
+        antwort = self.client.post("/api/mietobjekte/", {
+            "name": "Haus", "strasse": "Weg", "hausnummer": "2", "plz": "88131", "ort": "Lindau",
+            "objektart": "EFH", "nutzung": "EIGEN", "weg_anteil": "12.5", "weg_nenner": 100,
+        }, format="json")  # fmt: skip
+
+        self.assertEqual(antwort.status_code, 201)
+        self.assertIsNone(Mietobjekt.objects.get(pk=antwort.json()["id"]).weg_anteil)
+
+    def test_anteil_allein_aendern_nutzt_den_gespeicherten_nenner(self):
+        self.assertEqual(self.patch(weg_anteil="60").status_code, 200)
+        self.assertEqual(self.patch(weg_nenner=None).status_code, 400)

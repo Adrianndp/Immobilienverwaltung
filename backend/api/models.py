@@ -9,11 +9,17 @@ from django.utils import timezone
 
 class Mietobjekt(models.Model):
     class Objektart(models.TextChoices):
-        ETW = "ETW", "Eigentumswohnung"
         EFH = "EFH", "Einfamilienhaus"
+        EFE = "EFE", "Einfamilienhaus mit Einliegerwohnung"
+        ZFH = "ZFH", "Zweifamilienhaus"
+        RMH = "RMH", "Reihenmittelhaus"
+        REH = "REH", "Reihenendhaus"
         MFH = "MFH", "Mehrfamilienhaus"
-        GEW = "GEW", "Gewerbe"
-        SON = "SON", "Sonstiges"
+        ETW = "ETW", "Eigentumswohnung"
+        DHH = "DHH", "Doppelhaushälfte"
+
+    # Objektarten that have a WEG-Anteil; for the others it stays empty. Same list in the frontend's types.ts.
+    WEG_OBJEKTARTEN = {Objektart.EFE, Objektart.RMH, Objektart.REH, Objektart.MFH, Objektart.ETW, Objektart.DHH}
 
     class Nutzung(models.TextChoices):
         EIGEN = "EIGEN", "Eigennutzung"

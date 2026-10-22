@@ -58,9 +58,16 @@ function MietobjektKarte({ mietobjekt: m }: { mietobjekt: Mietobjekt }) {
             zusatz={<Wertentwicklung kaufpreis={m.kaufpreis} marktwert={m.marktwert} />}
           />
           <Zeile
-            label="Erwirtschafteter Betrag"
-            wert={formatEuro(m.erwirtschafteter_betrag, 2)}
-            farbe={Number(m.erwirtschafteter_betrag) >= 0 ? 'success.main' : 'error.main'}
+            label="Erwirtschafteter Betrag (12 Monate)"
+            info="Mieteinnahmen − Kosten − Schuldzinsen der letzten 12 Monate (ohne Tilgung)"
+            wert={m.erwirtschafteter_betrag === null ? 'Eigennutzung' : formatEuro(m.erwirtschafteter_betrag, 2)}
+            farbe={
+              m.erwirtschafteter_betrag === null
+                ? undefined
+                : Number(m.erwirtschafteter_betrag) >= 0
+                  ? 'success.main'
+                  : 'error.main'
+            }
           />
         </Stack>
       </Stack>

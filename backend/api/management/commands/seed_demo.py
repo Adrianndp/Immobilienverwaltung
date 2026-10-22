@@ -35,8 +35,9 @@ MIETOBJEKTE = {
         objektart="ETW", nutzung="VERMIETUNG", vermietung="GANZ",
         kaufdatum=date(2019, 4, 1), kaufpreis=D("285000"), grundschuld=D("230000"), marktwert=D("342000"),
         wohnflaeche=D("78.50"), grundstuecksflaeche=D("1240"), stockwerk=2, baujahr=1998,
-        weg_anteil=D("85.40"), weg_nenner=1000,
-        zimmer=3, baeder=1, kueche=1, balkon=1, keller=1, stellplatz=1,
+        weg_anteil=D("31.40"), weg_nenner=1000,
+        zimmer=3, baeder=1, kueche=1, balkon=1, terrasse=0, keller=1,
+        garage=0, tiefgarage=1, carport=0, stellplatz=0,
     ),
     "garten": dict(
         name="MFH Gartenweg", farbe=Mietobjekt.Farbe.ORANGE,
@@ -44,21 +45,30 @@ MIETOBJEKTE = {
         objektart="MFH", nutzung="VERMIETUNG", vermietung="TEILE",
         kaufdatum=date(2017, 9, 15), kaufpreis=D("720000"), grundschuld=D("600000"), marktwert=D("690000"),
         wohnflaeche=D("312"), grundstuecksflaeche=D("540"), baujahr=1965,
-        zimmer=12, baeder=4, kueche=4, balkon=2, keller=4, garage=2,
+        # The whole building belongs to the owner.
+        weg_anteil=D("1000"), weg_nenner=1000,
+        zimmer=12, baeder=4, kueche=4, balkon=2, terrasse=1, keller=4,
+        garage=2, tiefgarage=0, carport=0, stellplatz=2,
     ),
     "wg": dict(
         name="WG Uni-Viertel", farbe=Mietobjekt.Farbe.LILA,
         strasse="Kreuzstraße", hausnummer="31", plz="48143", ort="Münster",
         objektart="ETW", nutzung="VERMIETUNG", vermietung="TEILE",
         kaufdatum=date(2022, 6, 1), kaufpreis=D("210000"), grundschuld=D("160000"), marktwert=D("225000"),
-        wohnflaeche=D("74"), stockwerk=3, baujahr=1972, weg_anteil=D("6.20"), weg_nenner=100,
-        zimmer=3, baeder=1, kueche=1,
+        wohnflaeche=D("74"), grundstuecksflaeche=D("980"), stockwerk=3, baujahr=1972,
+        weg_anteil=D("6.20"), weg_nenner=100,
+        # One Zimmer per Einheit.
+        zimmer=3, baeder=1, kueche=1, balkon=1, terrasse=0, keller=1,
+        garage=0, tiefgarage=0, carport=0, stellplatz=0,
     ),
     "see": dict(
         name="Eigenheim Seeblick", farbe=Mietobjekt.Farbe.GRUEN,
         strasse="Seestraße", hausnummer="3", plz="78464", ort="Konstanz",
         objektart="EFH", nutzung="EIGEN",
         kaufdatum=date(2015, 3, 20), kaufpreis=D("495000"), marktwert=D("560000"),
+        wohnflaeche=D("145"), grundstuecksflaeche=D("620"), baujahr=1998,
+        zimmer=5, baeder=2, kueche=1, balkon=1, terrasse=1, keller=1,
+        garage=1, tiefgarage=0, carport=0, stellplatz=1,
     ),
 }  # fmt: skip
 
@@ -68,10 +78,12 @@ EINHEITEN = {
     "wg": ["Zimmer 1", "Zimmer 2", "Zimmer 3"],
 }
 
+# €/m², as of 1 January of the year (the Gutachterausschüsse publish every two years).
 BODENRICHTWERTE = {
-    "linden": [(2019, "3200"), (2021, "3800"), (2023, "4400"), (2024, "4200"), (2025, "4350"), (2026, "4600")],
-    "garten": [(2017, "95"), (2019, "120"), (2021, "160"), (2023, "210"), (2024, "200"), (2025, "205"), (2026, "215")],
-    "wg": [(2023, "780"), (2025, "820")],
+    "linden": [(2020, "2800"), (2022, "3400"), (2024, "3600")],
+    "garten": [(2020, "150"), (2022, "210"), (2024, "230")],
+    "wg": [(2020, "700"), (2022, "790"), (2024, "840")],
+    "see": [(2020, "560"), (2022, "640"), (2024, "690")],
 }
 
 DARLEHEN = [

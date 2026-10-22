@@ -29,9 +29,11 @@ import {
   NUTZUNG_LABELS,
   OBJEKTART_LABELS,
   VERMIETUNG_LABELS,
+  WEG_OBJEKTARTEN,
   type Einheit,
   type Mietobjekt,
   type Nutzung,
+  type Objektart,
 } from '../api/types'
 import BodenrichtwertDialog from '../components/BodenrichtwertDialog'
 import DarlehenDialog from '../components/DarlehenDialog'
@@ -39,6 +41,7 @@ import FarbAuswahl from '../components/FarbAuswahl'
 import Laden, { Ladefehler } from '../components/Laden'
 import LoeschenDialog from '../components/LoeschenDialog'
 import { useMeldung } from '../components/meldung'
+import WegAnteilFeld from '../components/WegAnteilFeld'
 import { dezimal, formatEuro, laenderName } from '../format'
 
 type Feld = Exclude<keyof Mietobjekt, 'id'>
@@ -53,7 +56,7 @@ const DEZIMAL: Feld[] = [
   'grundstuecksflaeche',
   'weg_anteil',
 ]
-const GANZZAHL_OPTIONAL: Feld[] = ['stockwerk', 'baujahr', 'weg_nenner']
+const GANZZAHL_OPTIONAL: Feld[] = ['stockwerk', 'baujahr']
 const ANZAHL: Feld[] = [
   'zimmer',
   'baeder',
@@ -186,6 +189,15 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
     setWerte((w) => ({ ...w, nutzung, vermietung: nutzung === 'EIGEN' ? '' : w.vermietung }))
   }
 
+  // Objektarten without a WEG-Anteil hide the fields and save them as null.
+  function setObjektart(objektart: Objektart) {
+    setWerte((w) => ({
+      ...w,
+      objektart,
+      ...(!WEG_OBJEKTARTEN.includes(objektart) && { weg_anteil: null, weg_nenner: null }),
+    }))
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSaving(true)
@@ -226,7 +238,13 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
             <TextField label="Name" required {...feld('name')} />
           </Zelle>
           <Zelle>
-            <TextField select label="Objektart" required {...feld('objektart')}>
+            <TextField
+              select
+              label="Objektart"
+              required
+              {...feld('objektart')}
+              onChange={(e) => setObjektart(e.target.value as Objektart)}
+            >
               {Object.entries(OBJEKTART_LABELS).map(([value, label]) => (
                 <MenuItem key={value} value={value}>
                   {label}
@@ -333,18 +351,17 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
           <Zelle>
             <TextField label="Baujahr" {...feld('baujahr')} />
           </Zelle>
-          <Zelle>
-            <TextField label="WEG-Anteil" {...feld('weg_anteil')} />
-          </Zelle>
-          <Zelle>
-            <TextField select label="WEG-Nenner" {...feld('weg_nenner')} type={undefined}>
-              <MenuItem value="">
-                <em>Keiner</em>
-              </MenuItem>
-              <MenuItem value={100}>/100</MenuItem>
-              <MenuItem value={1000}>/1000</MenuItem>
-            </TextField>
-          </Zelle>
+          {WEG_OBJEKTARTEN.includes(werte.objektart) && (
+            <Zelle>
+              <WegAnteilFeld
+                anteil={werte.weg_anteil ?? ''}
+                nenner={werte.weg_nenner}
+                onAnteilChange={(anteil) => setFeld('weg_anteil', zuWert('weg_anteil', anteil))}
+                onNennerChange={(nenner) => setFeld('weg_nenner', nenner)}
+                error={[...(fehler.weg_anteil ?? []), ...(fehler.weg_nenner ?? [])].join(' ') || undefined}
+              />
+            </Zelle>
+          )}
         </Abschnitt>
 
         <Abschnitt titel="Nutzung">

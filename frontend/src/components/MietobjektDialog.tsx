@@ -15,11 +15,16 @@ import {
   NUTZUNG_LABELS,
   OBJEKTART_LABELS,
   VERMIETUNG_LABELS,
+  WEG_OBJEKTARTEN,
   type MietobjektInput,
   type Nutzung,
+  type Objektart,
+  type WegNenner,
 } from '../api/types'
+import { dezimal } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
+import WegAnteilFeld from './WegAnteilFeld'
 
 interface Props {
   open: boolean
@@ -35,11 +40,19 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
   const [error, setError] = useState<string>()
   const [fehler, setFehler] = useState<Record<string, string>>({})
   const [nutzung, setNutzung] = useState<Nutzung>('VERMIETUNG')
+  const [objektart, setObjektart] = useState<Objektart>('ETW')
+  const [wegAnteil, setWegAnteil] = useState('')
+  const [wegNenner, setWegNenner] = useState<WegNenner>(1000)
+  // Without a share the denominator alone means nothing, so both are sent as null.
+  const mitWegAnteil = WEG_OBJEKTARTEN.includes(objektart) && wegAnteil !== ''
 
   function close() {
     setError(undefined)
     setFehler({})
     setNutzung('VERMIETUNG')
+    setObjektart('ETW')
+    setWegAnteil('')
+    setWegNenner(1000)
     onClose()
   }
 
@@ -47,6 +60,8 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
     event.preventDefault()
     const data = Object.fromEntries(new FormData(event.currentTarget)) as unknown as MietobjektInput
     if (nutzung === 'EIGEN') data.vermietung = ''
+    data.weg_anteil = mitWegAnteil ? dezimal(wegAnteil) : null
+    data.weg_nenner = mitWegAnteil ? wegNenner : null
     setSaving(true)
     setError(undefined)
     setFehler({})
@@ -83,13 +98,30 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
           <Stack spacing={2} sx={{ pt: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
             <TextField name="name" label="Name" required autoComplete="off" {...fehlerProps('name', 'z. B. Wohnung 1')} />
-            <TextField select name="objektart" label="Objektart" defaultValue="ETW" required {...fehlerProps('objektart')}>
+            <TextField
+              select
+              name="objektart"
+              label="Objektart"
+              value={objektart}
+              onChange={(e) => setObjektart(e.target.value as Objektart)}
+              required
+              {...fehlerProps('objektart')}
+            >
               {Object.entries(OBJEKTART_LABELS).map(([value, label]) => (
                 <MenuItem key={value} value={value}>
                   {label}
                 </MenuItem>
               ))}
             </TextField>
+            {WEG_OBJEKTARTEN.includes(objektart) && (
+              <WegAnteilFeld
+                anteil={wegAnteil}
+                nenner={wegNenner}
+                onAnteilChange={setWegAnteil}
+                onNennerChange={setWegNenner}
+                error={[fehler.weg_anteil, fehler.weg_nenner].filter(Boolean).join(' ') || undefined}
+              />
+            )}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 select

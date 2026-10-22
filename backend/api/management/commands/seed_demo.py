@@ -258,6 +258,11 @@ LIEFERANTEN = {
         strasse="Hammer Straße", hausnummer="214", plz="48153", ort="Münster", land="DE",
         email="kontakt@kuechenstudio-brandt.example", telefon="0251 7704152",
     ),
+    "Elektro Vogt": dict(
+        firmenname="Elektro Vogt", vorname="Martin", nachname="Vogt",
+        strasse="Wolbecker Straße", hausnummer="47", plz="48155", ort="Münster", land="DE",
+        email="service@elektro-vogt.example", telefon="0251 3381906",
+    ),
     "Hanse Versicherung AG": dict(
         firmenname="Hanse Versicherung AG", vorname="Tobias", nachname="Petersen",
         strasse="Am Sandtorkai", hausnummer="1", plz="20457", ort="Hamburg", land="DE",
@@ -274,8 +279,9 @@ def rechnungen(start):
     """The Rechnungen of the 12 months from start (the 1st of a month), dated and paid within them.
 
     anteile: {Mietobjekt key: prozent}. bezahlt: (buchungstag, buchungsart, buchungstext), None = still open.
-    The two open ones are in the last month; samples/demo_umsaetze.csv has their payments for live assignment
-    (the Huber one is also seeded as an open Buchung of the current month).
+    The open ones are in the last month. samples/demo_umsaetze.csv has the Telekom and Huber payments for live
+    assignment (the Huber one is also seeded as an open Buchung of the current month); the two Elektro Vogt ones
+    are paid together by one Buchung of the current month.
     """
     liste = []
     for n in range(12):
@@ -325,6 +331,12 @@ def rechnungen(start):
         dict(lieferant="Sanitär Huber GmbH", kostenart="Reparaturen", datum=heizung.replace(day=15),
              name="Reparatur Heizung", rechnungsnummer=f"{heizung:%Y-%m}15", betrag=D("412.50"),
              anteile={"garten": 100}, bezahlt=None),
+        dict(lieferant="Elektro Vogt", kostenart="Reparaturen", datum=heizung.replace(day=18),
+             name="Reparatur Fernseher Gemeinschaftsraum", rechnungsnummer="EV-2061", betrag=D("189"),
+             anteile={"wg": 100}, bezahlt=None),
+        dict(lieferant="Elektro Vogt", kostenart="Reparaturen", datum=heizung.replace(day=22),
+             name="Reparatur Waschmaschine", rechnungsnummer="EV-2074", betrag=D("145"),
+             anteile={"wg": 100}, bezahlt=None),
     ]  # fmt: skip
     return liste
 
@@ -412,7 +424,7 @@ class Command(BaseCommand):
                 tag, art, text = daten["bezahlt"]
                 self.buchen(user, tag, daten["lieferant"], text, art, -rechnung.betrag, rechnung=rechnung)
             else:
-                offene_rechnungen[daten["lieferant"]] = rechnung
+                offene_rechnungen[daten["name"]] = rechnung
 
         # Rent for every month, from every contract that ran in that month.
         for n in range(12):
@@ -459,7 +471,7 @@ class Command(BaseCommand):
         ]:
             self.buchen(user, tag(n), v.mieter.kontoinhaber, text, "Überweisung", v.kaltmiete + v.nebenkosten)
 
-        huber = offene_rechnungen["Sanitär Huber GmbH"]
+        huber = offene_rechnungen["Reparatur Heizung"]
         self.buchen(
             user, tag(6), "Sanitär Huber GmbH", f"Rechnung {huber.rechnungsnummer} {huber.name} Gartenweg 5",
             "Überweisung", -huber.betrag, wertstellung=tag(7),
@@ -471,12 +483,13 @@ class Command(BaseCommand):
             "Lastschrift", D("-156.80"),
         )  # fmt: skip
 
-        # Half of it assigned, the rest open.
-        klein = vertraege["Klein"]
-        miete = klein.kaltmiete + klein.nebenkosten
+        # One transfer for both Elektro Vogt Rechnungen, only assigned to the first so far.
+        fernseher = offene_rechnungen["Reparatur Fernseher Gemeinschaftsraum"]
+        waschmaschine = offene_rechnungen["Reparatur Waschmaschine"]
         self.buchen(
-            user, tag(5), klein.mieter.kontoinhaber, f"Miete {monat[:3]} Kreuzstr. 31", "Überweisung", miete,
-            zugeordnet=miete / 2, mietvertrag=klein,
+            user, tag(9), "Elektro Vogt",
+            f"Rechnungen {fernseher.rechnungsnummer} und {waschmaschine.rechnungsnummer} Kreuzstr. 31",
+            "Überweisung", -(fernseher.betrag + waschmaschine.betrag), zugeordnet=fernseher.betrag, rechnung=fernseher,
         )  # fmt: skip
 
     def buchen(self, user, tag, kontoinhaber, text, art, betrag, wertstellung=None, zugeordnet=None, **ziel):

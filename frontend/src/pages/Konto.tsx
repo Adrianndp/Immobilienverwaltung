@@ -1,8 +1,5 @@
-import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
-import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -18,14 +15,16 @@ import { useBuchungen, useImportBuchungen } from '../api/hooks'
 import type { Buchung } from '../api/types'
 import BuchungZuordnenDialog from '../components/BuchungZuordnenDialog'
 import TabellenContainer, { DatumZelle } from '../components/Tabelle'
+import Laden, { Ladefehler } from '../components/Laden'
 import { formatEuro, oderLeer } from '../format'
+import { useMeldung } from '../components/meldung'
 
 function Konto() {
+  const meldung = useMeldung()
   const { data: buchungen, loading, error, reload } = useBuchungen()
   const importBuchungen = useImportBuchungen()
   const dateiInput = useRef<HTMLInputElement>(null)
   const [importierend, setImportierend] = useState(false)
-  const [meldung, setMeldung] = useState<{ text: string; fehler: boolean }>()
   const [zuzuordnen, setZuzuordnen] = useState<Buchung>()
 
   async function handleDatei(event: ChangeEvent<HTMLInputElement>) {
@@ -36,9 +35,9 @@ function Konto() {
     setImportierend(true)
     try {
       const ergebnis = await importBuchungen(datei)
-      setMeldung({ text: `${ergebnis.importiert} importiert, ${ergebnis.uebersprungen} übersprungen`, fehler: false })
+      meldung(`${ergebnis.importiert} importiert, ${ergebnis.uebersprungen} übersprungen`)
     } catch (e) {
-      setMeldung({
+      meldung({
         text: validierungsFehler(e)?.detail ?? (e instanceof Error ? e.message : String(e)),
         fehler: true,
       })
@@ -70,18 +69,8 @@ function Konto() {
         <BuchungZuordnenDialog buchung={zuzuordnen} onClose={() => setZuzuordnen(undefined)} onSaved={reload} />
       )}
 
-      <Snackbar open={!!meldung} autoHideDuration={6000} onClose={() => setMeldung(undefined)}>
-        <Alert
-          severity={meldung?.fehler ? 'error' : 'success'}
-          variant="filled"
-          onClose={() => setMeldung(undefined)}
-        >
-          {meldung?.text}
-        </Alert>
-      </Snackbar>
-
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Buchungen konnten nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Buchungen konnten nicht geladen werden." error={error} />}
       {buchungen?.length === 0 && (
         <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
           <Typography color="text.secondary">Noch keine Buchungen.</Typography>

@@ -1,6 +1,4 @@
-import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Grid from '@mui/material/Grid'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
@@ -13,6 +11,7 @@ import { useMietvertraege } from '../api/hooks'
 import { mietvertragStatus, type Mietvertrag } from '../api/types'
 import InfoKarte, { Zeile } from '../components/InfoKarte'
 import MietvertragDialog from '../components/MietvertragDialog'
+import Laden, { Ladefehler } from '../components/Laden'
 import { formatDatum, formatEuro, laenderName } from '../format'
 
 // Only the filled ones, as a group; nothing if all are empty.
@@ -108,8 +107,8 @@ function Mieter() {
         />
       )}
 
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Mieter konnten nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Mieter konnten nicht geladen werden." error={error} />}
       {mietvertraege?.length === 0 && (
         <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
           <Typography color="text.secondary">Keine Mieter in dieser Ansicht.</Typography>

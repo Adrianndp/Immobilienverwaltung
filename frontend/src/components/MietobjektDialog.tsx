@@ -18,6 +18,7 @@ import {
   type Nutzung,
 } from '../api/types'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
+import { useMeldung } from './meldung'
 
 interface Props {
   open: boolean
@@ -26,6 +27,7 @@ interface Props {
 }
 
 function MietobjektDialog({ open, onClose, onCreated }: Props) {
+  const meldung = useMeldung()
   const vollbild = useVollbild()
   const createMietobjekt = useCreateMietobjekt()
   const [saving, setSaving] = useState(false)
@@ -46,6 +48,7 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
     try {
       await createMietobjekt(data)
       onCreated()
+      meldung('Mietobjekt angelegt')
       close()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))

@@ -1,7 +1,6 @@
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -22,8 +21,10 @@ import { validierungsFehler } from '../api/client'
 import { useCreateDarlehen, useDarlehen, useUpdateDarlehen } from '../api/hooks'
 import { DARLEHEN_ART_LABELS, type Darlehen, type Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
+import Laden, { Ladefehler } from './Laden'
 import { dezimal, formatEuro, LEER } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
+import { useMeldung } from './meldung'
 
 type Feld = 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
 
@@ -46,6 +47,7 @@ interface FormularProps {
 }
 
 function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularProps) {
+  const meldung = useMeldung()
   const createDarlehen = useCreateDarlehen()
   const updateDarlehen = useUpdateDarlehen()
   const [werte, setWerte] = useState<Record<Feld, string>>({
@@ -91,6 +93,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
       if (darlehen) await updateDarlehen(darlehen.id, daten)
       else await createDarlehen(daten)
       onSaved()
+      meldung('Darlehen gespeichert')
     } catch (e) {
       const felder = validierungsFehler(e)
       if (felder) {
@@ -262,12 +265,12 @@ function DarlehenDialog({ mietobjekt, onClose, onSaved }: Props) {
       <DialogTitle>Darlehen</DialogTitle>
       {loading && (
         <DialogContent>
-          <CircularProgress />
+          <Laden />
         </DialogContent>
       )}
       {error && (
         <DialogContent>
-          <Alert severity="error">Darlehen konnte nicht geladen werden.</Alert>
+          <Ladefehler text="Darlehen konnte nicht geladen werden." error={error} />
         </DialogContent>
       )}
       {data && (

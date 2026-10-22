@@ -13,6 +13,7 @@ import { useCreateLieferant, useUpdateLieferant } from '../api/hooks'
 import type { Lieferant, LieferantInput } from '../api/types'
 import { laenderName } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
+import { useMeldung } from './meldung'
 
 const LEER_LIEFERANT: LieferantInput = {
   firmenname: '',
@@ -35,6 +36,7 @@ interface Props {
 }
 
 function LieferantDialog({ lieferant, onClose, onSaved }: Props) {
+  const meldung = useMeldung()
   const vollbild = useVollbild()
   const createLieferant = useCreateLieferant()
   const updateLieferant = useUpdateLieferant()
@@ -72,6 +74,7 @@ function LieferantDialog({ lieferant, onClose, onSaved }: Props) {
       if (lieferant) await updateLieferant(lieferant.id, werte)
       else await createLieferant(werte)
       onSaved()
+      meldung(lieferant ? 'Lieferant gespeichert' : 'Lieferant angelegt')
       onClose()
     } catch (e) {
       const felder = validierungsFehler(e)

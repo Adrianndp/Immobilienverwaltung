@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography'
 import MenuIcon from '@mui/icons-material/Menu'
 import { useState } from 'react'
 import { Outlet } from 'react-router'
+import MeldungProvider from './MeldungProvider.tsx'
 import Sidebar from './Sidebar.tsx'
 
 function Layout() {
@@ -33,7 +34,9 @@ function Layout() {
       {/* minWidth 0: wide tables scroll in their container instead of widening the page. */}
       <Box component="main" sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, sm: 3 } }}>
         <Toolbar variant="dense" sx={{ display: { md: 'none' } }} />
-        <Outlet />
+        <MeldungProvider>
+          <Outlet />
+        </MeldungProvider>
       </Box>
     </Box>
   )

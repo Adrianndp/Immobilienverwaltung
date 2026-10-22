@@ -1,6 +1,4 @@
-import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -17,6 +15,7 @@ import { useLieferanten } from '../api/hooks'
 import type { Lieferant } from '../api/types'
 import LieferantDialog from '../components/LieferantDialog'
 import TabellenContainer from '../components/Tabelle'
+import Laden, { Ladefehler } from '../components/Laden'
 import { oderLeer } from '../format'
 
 function Lieferanten() {
@@ -25,22 +24,29 @@ function Lieferanten() {
   const [dialog, setDialog] = useState<Lieferant | null>()
   const navigate = useNavigate()
 
+  const anlegen = (
+    <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialog(null)}>
+      Anlegen
+    </Button>
+  )
+
   return (
     <Stack spacing={2}>
       <Stack direction="row" useFlexGap sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h4">Lieferanten</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialog(null)}>
-          Anlegen
-        </Button>
+        {anlegen}
       </Stack>
       {dialog !== undefined && (
         <LieferantDialog lieferant={dialog ?? undefined} onClose={() => setDialog(undefined)} onSaved={reload} />
       )}
 
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Lieferanten konnten nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Lieferanten konnten nicht geladen werden." error={error} />}
       {lieferanten?.length === 0 && (
-        <Typography color="text.secondary">Noch keine Lieferanten angelegt.</Typography>
+        <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
+          <Typography color="text.secondary">Noch keine Lieferanten angelegt.</Typography>
+          {anlegen}
+        </Stack>
       )}
 
       {!!lieferanten?.length && (

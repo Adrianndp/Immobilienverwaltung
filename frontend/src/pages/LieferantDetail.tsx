@@ -1,6 +1,4 @@
-import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -20,6 +18,7 @@ import { Zeile } from '../components/InfoKarte'
 import LieferantDialog from '../components/LieferantDialog'
 import RechnungenTabelle from '../components/RechnungenTabelle'
 import TabellenContainer from '../components/Tabelle'
+import Laden, { Ladefehler } from '../components/Laden'
 import { formatEuro, laenderName, lieferantName, oderLeer } from '../format'
 
 // [Jahr, Summe in Cent], newest year first. Cents avoid floating point drift when adding amounts.
@@ -55,8 +54,8 @@ function LieferantDetail() {
         <LieferantDialog lieferant={lieferant} onClose={() => setDialogOpen(false)} onSaved={reload} />
       )}
 
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Lieferant konnte nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Lieferant konnte nicht geladen werden." error={error} />}
       {lieferant && (
         <Paper variant="outlined" sx={{ p: 2, maxWidth: 600 }}>
           <Stack spacing={0.5}>
@@ -73,9 +72,16 @@ function LieferantDetail() {
       )}
 
       <Typography variant="h6">Summe pro Jahr</Typography>
-      {rechnungenLoading && <CircularProgress />}
-      {rechnungenError && <Alert severity="error">Rechnungen konnten nicht geladen werden.</Alert>}
-      {rechnungen?.length === 0 && <Typography color="text.secondary">Noch keine Rechnungen.</Typography>}
+      {rechnungenLoading && <Laden />}
+      {rechnungenError && <Ladefehler text="Rechnungen konnten nicht geladen werden." error={rechnungenError} />}
+      {rechnungen?.length === 0 && (
+        <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
+          <Typography color="text.secondary">Noch keine Rechnungen.</Typography>
+          <Button variant="outlined" component={Link} to="/kosten/rechnungen">
+            Zu den Rechnungen
+          </Button>
+        </Stack>
+      )}
       {!!rechnungen?.length && (
         <>
           <TabellenContainer sx={{ maxWidth: 400 }}>

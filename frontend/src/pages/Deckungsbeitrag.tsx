@@ -1,5 +1,3 @@
-import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
 import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
@@ -17,6 +15,7 @@ import { Link } from 'react-router'
 import { useDeckungsbeitrag, useMietobjekte } from '../api/hooks'
 import type { Mietobjekt } from '../api/types'
 import TabellenContainer from '../components/Tabelle'
+import Laden, { Ladefehler } from '../components/Laden'
 import { formatEuro } from '../format'
 
 const MONATE = [
@@ -127,8 +126,8 @@ function Auswertung({ mietobjekte }: { mietobjekte: Mietobjekt[] }) {
           </TextField>
         </Stack>
 
-        {loading && <CircularProgress />}
-        {error && <Alert severity="error">Auswertung konnte nicht geladen werden.</Alert>}
+        {loading && <Laden />}
+        {error && <Ladefehler text="Auswertung konnte nicht geladen werden." error={error} />}
         {data && (
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -182,8 +181,8 @@ function Deckungsbeitrag() {
     <Stack spacing={2}>
       <Typography variant="h4">Objekt Deckungsbeitrag</Typography>
 
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Mietobjekte konnten nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Mietobjekte konnten nicht geladen werden." error={error} />}
       {mietobjekte?.length === 0 && (
         <Typography color="text.secondary">
           Legen Sie zuerst ein <Link to="/mietobjekte">Mietobjekt</Link> an.

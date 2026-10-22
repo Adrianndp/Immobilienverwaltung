@@ -1,6 +1,4 @@
-import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -15,38 +13,44 @@ import { useDeleteRechnung, useRechnungen } from '../api/hooks'
 import type { Rechnung } from '../api/types'
 import RechnungDialog from '../components/RechnungDialog'
 import RechnungenTabelle from '../components/RechnungenTabelle'
+import Laden, { Ladefehler } from '../components/Laden'
+import { useMeldung } from '../components/meldung'
 
 function Rechnungen() {
+  const meldung = useMeldung()
   const { data: rechnungen, loading, error, reload } = useRechnungen()
   const deleteRechnung = useDeleteRechnung()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [zuLoeschen, setZuLoeschen] = useState<Rechnung>()
   const [loeschend, setLoeschend] = useState(false)
-  const [loeschFehler, setLoeschFehler] = useState<string>()
 
   async function loeschen() {
     if (!zuLoeschen) return
     setLoeschend(true)
-    setLoeschFehler(undefined)
     try {
       await deleteRechnung(zuLoeschen.id)
       reload()
+      meldung('Rechnung gelöscht')
     } catch (e) {
       // 400 from the backend: already linked to a bank payment.
-      setLoeschFehler(validierungsFehler(e)?.detail ?? (e instanceof Error ? e.message : String(e)))
+      meldung({ text: validierungsFehler(e)?.detail ?? (e instanceof Error ? e.message : String(e)), fehler: true })
     } finally {
       setLoeschend(false)
       setZuLoeschen(undefined)
     }
   }
 
+  const anlegen = (
+    <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+      Anlegen
+    </Button>
+  )
+
   return (
     <Stack spacing={2}>
       <Stack direction="row" useFlexGap sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h4">Rechnungen</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-          Anlegen
-        </Button>
+        {anlegen}
       </Stack>
       {dialogOpen && <RechnungDialog onClose={() => setDialogOpen(false)} onSaved={reload} />}
 
@@ -65,15 +69,13 @@ function Rechnungen() {
         </DialogActions>
       </Dialog>
 
-      {loeschFehler && (
-        <Alert severity="error" onClose={() => setLoeschFehler(undefined)}>
-          {loeschFehler}
-        </Alert>
-      )}
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Rechnungen konnten nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Rechnungen konnten nicht geladen werden." error={error} />}
       {rechnungen?.length === 0 && (
-        <Typography color="text.secondary">Noch keine Rechnungen angelegt.</Typography>
+        <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
+          <Typography color="text.secondary">Noch keine Rechnungen angelegt.</Typography>
+          {anlegen}
+        </Stack>
       )}
 
       {!!rechnungen?.length && <RechnungenTabelle rechnungen={rechnungen} onDelete={setZuLoeschen} />}

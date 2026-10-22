@@ -14,6 +14,7 @@ import { useCreateKostenart } from '../api/hooks'
 import { KATEGORIE_LABELS, type Kategorie } from '../api/types'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { dezimal } from '../format'
+import { useMeldung } from './meldung'
 
 interface Props {
   onClose: () => void
@@ -21,6 +22,7 @@ interface Props {
 }
 
 function KostenartDialog({ onClose, onSaved }: Props) {
+  const meldung = useMeldung()
   const vollbild = useVollbild()
   const createKostenart = useCreateKostenart()
   const [name, setName] = useState('')
@@ -42,6 +44,7 @@ function KostenartDialog({ onClose, onSaved }: Props) {
         abschreibung_prozent: kategorie === 'ABSCHREIBUNG' ? dezimal(prozent) || null : null,
       })
       onSaved()
+      meldung('Kostenart angelegt')
       onClose()
     } catch (e) {
       const felder = validierungsFehler(e)

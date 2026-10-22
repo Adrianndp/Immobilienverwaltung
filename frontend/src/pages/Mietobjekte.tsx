@@ -1,7 +1,5 @@
-import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Grid from '@mui/material/Grid'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
@@ -14,6 +12,7 @@ import { useMietobjekte } from '../api/hooks'
 import type { Mietobjekt } from '../api/types'
 import InfoKarte, { Zeile } from '../components/InfoKarte'
 import MietobjektDialog from '../components/MietobjektDialog'
+import Laden, { Ladefehler } from '../components/Laden'
 import { formatDatum, formatEuro, laenderName } from '../format'
 
 function Wertentwicklung({ kaufpreis, marktwert }: Pick<Mietobjekt, 'kaufpreis' | 'marktwert'>) {
@@ -73,20 +72,27 @@ function Mietobjekte() {
   const { data: mietobjekte, loading, error, reload } = useMietobjekte()
   const [dialogOpen, setDialogOpen] = useState(false)
 
+  const anlegen = (
+    <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+      Anlegen
+    </Button>
+  )
+
   return (
     <Stack spacing={2}>
       <Stack direction="row" useFlexGap sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h4">Meine Mietobjekte</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-          Anlegen
-        </Button>
+        {anlegen}
       </Stack>
       <MietobjektDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreated={reload} />
 
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Mietobjekte konnten nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Mietobjekte konnten nicht geladen werden." error={error} />}
       {mietobjekte?.length === 0 && (
-        <Typography color="text.secondary">Noch keine Mietobjekte angelegt.</Typography>
+        <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
+          <Typography color="text.secondary">Noch keine Mietobjekte angelegt.</Typography>
+          {anlegen}
+        </Stack>
       )}
 
       <Grid container spacing={2}>

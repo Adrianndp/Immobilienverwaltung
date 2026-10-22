@@ -22,6 +22,7 @@ import type { Buchung, Zuordnung } from '../api/types'
 import { Zeile } from './InfoKarte'
 import { dezimal, formatDatum, formatEuro } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
+import { useMeldung } from './meldung'
 
 type ZielFeld = 'mietvertrag' | 'rechnung' | 'darlehen'
 
@@ -48,6 +49,7 @@ function cent(betrag: string) {
 }
 
 function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
+  const meldung = useMeldung()
   const vollbild = useVollbild()
   const zuordnen = useZuordnenBuchung()
   const { data: mietvertraege } = useMietvertraege()
@@ -113,6 +115,7 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
         }),
       )
       onSaved()
+      meldung('Zuordnung gespeichert')
       onClose()
     } catch (e) {
       const felder = validierungsFehler(e)

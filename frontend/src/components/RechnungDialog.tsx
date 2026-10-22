@@ -19,6 +19,7 @@ import { validierungsFehler } from '../api/client'
 import { useCreateRechnung, useKostenarten, useLieferanten, useMietobjekte } from '../api/hooks'
 import { dezimal, lieferantName } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
+import { useMeldung } from './meldung'
 
 type Feld = 'datum' | 'name' | 'rechnungsnummer' | 'betrag'
 
@@ -33,6 +34,7 @@ interface Props {
 }
 
 function RechnungDialog({ onClose, onSaved }: Props) {
+  const meldung = useMeldung()
   const vollbild = useVollbild()
   const createRechnung = useCreateRechnung()
   const { data: kostenarten } = useKostenarten()
@@ -84,6 +86,7 @@ function RechnungDialog({ onClose, onSaved }: Props) {
         anteile: anteile.map((a) => ({ mietobjekt: Number(a.mietobjekt), prozent: dezimal(a.prozent) })),
       })
       onSaved()
+      meldung('Rechnung angelegt')
       onClose()
     } catch (e) {
       const felder = validierungsFehler(e)

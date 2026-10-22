@@ -1,6 +1,5 @@
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Grid from '@mui/material/Grid'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -9,7 +8,6 @@ import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
-import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -37,7 +35,9 @@ import {
 import BodenrichtwertDialog from '../components/BodenrichtwertDialog'
 import DarlehenDialog from '../components/DarlehenDialog'
 import FarbAuswahl from '../components/FarbAuswahl'
+import Laden, { Ladefehler } from '../components/Laden'
 import { dezimal, formatEuro, laenderName } from '../format'
+import { useMeldung } from '../components/meldung'
 
 type Feld = Exclude<keyof Mietobjekt, 'id'>
 type Fehler = Partial<Record<string, string[]>>
@@ -147,13 +147,13 @@ interface FormularProps {
 }
 
 function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: FormularProps) {
+  const meldung = useMeldung()
   const updateMietobjekt = useUpdateMietobjekt()
   const [gespeichert, setGespeichert] = useState(mietobjekt)
   const [werte, setWerte] = useState(mietobjekt)
   const [fehler, setFehler] = useState<Fehler>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()
   const [saving, setSaving] = useState(false)
-  const [erfolg, setErfolg] = useState(false)
 
   const geaendert = (Object.keys(werte) as (keyof Mietobjekt)[]).filter(
     (k) => werte[k] !== gespeichert[k],
@@ -199,7 +199,7 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
       const neu = await updateMietobjekt(mietobjekt.id, daten)
       setGespeichert(neu)
       setWerte(neu)
-      setErfolg(true)
+      meldung('Gespeichert')
     } catch (e) {
       if (e instanceof ApiError && e.status === 400 && e.body && typeof e.body === 'object') {
         const { non_field_errors, detail, ...felder } = e.body as Fehler & { detail?: string }
@@ -383,17 +383,12 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
           </Button>
         </Stack>
       </Stack>
-      <Snackbar
-        open={erfolg}
-        autoHideDuration={3000}
-        onClose={() => setErfolg(false)}
-        message="Gespeichert"
-      />
     </form>
   )
 }
 
 function Einheiten({ mietobjektId }: { mietobjektId: number }) {
+  const meldung = useMeldung()
   const { data: einheiten, loading, error, reload } = useEinheiten(mietobjektId)
   const createEinheit = useCreateEinheit()
   const deleteEinheit = useDeleteEinheit()
@@ -416,6 +411,7 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
       await createEinheit({ mietobjekt: mietobjektId, name })
       setName('')
       reload()
+      meldung('Einheit hinzugefügt')
     } catch (e) {
       setFehler(fehlerText(e))
     } finally {
@@ -428,6 +424,7 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
     try {
       await deleteEinheit(id)
       reload()
+      meldung('Einheit gelöscht')
     } catch (e) {
       setFehler(fehlerText(e))
     }
@@ -438,8 +435,8 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
       <Typography variant="h6" sx={{ mb: 1 }}>
         Einheiten
       </Typography>
-      {loading && <CircularProgress size={24} />}
-      {error && <Alert severity="error">Einheiten konnten nicht geladen werden.</Alert>}
+      {loading && <Laden klein />}
+      {error && <Ladefehler text="Einheiten konnten nicht geladen werden." error={error} />}
       {einheiten?.length === 0 && <Typography color="text.secondary">Noch keine Einheiten.</Typography>}
       <List dense>
         {einheiten?.map((e) => (
@@ -492,8 +489,8 @@ function MietobjektDetail() {
         <Typography variant="h4">{mietobjekt?.name ?? 'Mietobjekt'}</Typography>
       </Stack>
 
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Mietobjekt konnte nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Mietobjekt konnte nicht geladen werden." error={error} />}
       {mietobjekt && (
         <>
           <MietobjektFormular

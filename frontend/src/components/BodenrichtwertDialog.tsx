@@ -2,7 +2,6 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -22,8 +21,10 @@ import { validierungsFehler } from '../api/client'
 import { useBodenrichtwerte, useCreateBodenrichtwert, useDeleteBodenrichtwert } from '../api/hooks'
 import type { Bodenrichtwert, Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
+import Laden, { Ladefehler } from './Laden'
 import { dezimal, formatEuro, LEER } from '../format'
 import { useVollbild } from './dialog'
+import { useMeldung } from './meldung'
 
 // "270.00" -> "270,00 €/m²"
 function proQuadratmeter(wert: string) {
@@ -107,6 +108,7 @@ interface Props {
 }
 
 function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
+  const meldung = useMeldung()
   const vollbild = useVollbild()
   const { data, loading, error, reload } = useBodenrichtwerte(mietobjekt.id)
   const createBodenrichtwert = useCreateBodenrichtwert()
@@ -146,6 +148,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
       setDatum('')
       setWert('')
       geaendert()
+      meldung('Bodenrichtwert hinzugefügt')
     } catch (e) {
       fehlerAnzeigen(e)
     } finally {
@@ -159,6 +162,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
     try {
       await deleteBodenrichtwert(id)
       geaendert()
+      meldung('Bodenrichtwert gelöscht')
     } catch (e) {
       fehlerAnzeigen(e)
     }
@@ -168,8 +172,8 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
     <Dialog open onClose={onClose} fullWidth maxWidth="lg" fullScreen={vollbild}>
       <DialogTitle>Bodenrichtwert – {mietobjekt.name}</DialogTitle>
       <DialogContent>
-        {loading && <CircularProgress />}
-        {error && <Alert severity="error">Bodenrichtwerte konnten nicht geladen werden.</Alert>}
+        {loading && <Laden />}
+        {error && <Ladefehler text="Bodenrichtwerte konnten nicht geladen werden." error={error} />}
         {data && (
           <Stack spacing={3}>
             {allgemeinerFehler && <Alert severity="error">{allgemeinerFehler}</Alert>}

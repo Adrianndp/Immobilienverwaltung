@@ -1,5 +1,3 @@
-import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -15,6 +13,7 @@ import { Link } from 'react-router'
 import { useAnlageV, useMietobjekte } from '../api/hooks'
 import type { Mietobjekt } from '../api/types'
 import TabellenContainer from '../components/Tabelle'
+import Laden, { Ladefehler } from '../components/Laden'
 import { formatEuro } from '../format'
 
 const AKTUELLES_JAHR = new Date().getFullYear()
@@ -61,8 +60,8 @@ function Auswertung({ mietobjekte }: { mietobjekte: Mietobjekt[] }) {
           </TextField>
         </Stack>
 
-        {loading && <CircularProgress />}
-        {error && <Alert severity="error">Auswertung konnte nicht geladen werden.</Alert>}
+        {loading && <Laden />}
+        {error && <Ladefehler text="Auswertung konnte nicht geladen werden." error={error} />}
         {data && (
           <>
             <Stack spacing={1}>
@@ -158,8 +157,8 @@ function AnlageV() {
     <Stack spacing={2}>
       <Typography variant="h4">Auswertung V</Typography>
 
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">Mietobjekte konnten nicht geladen werden.</Alert>}
+      {loading && <Laden />}
+      {error && <Ladefehler text="Mietobjekte konnten nicht geladen werden." error={error} />}
       {mietobjekte?.length === 0 && (
         <Typography color="text.secondary">
           Legen Sie zuerst ein <Link to="/mietobjekte">Mietobjekt</Link> an.

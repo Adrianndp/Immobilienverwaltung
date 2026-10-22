@@ -13,10 +13,24 @@ import { useMietvertraege } from '../api/hooks'
 import { mietvertragStatus, type Mietvertrag } from '../api/types'
 import InfoKarte, { Zeile } from '../components/InfoKarte'
 import MietvertragDialog from '../components/MietvertragDialog'
-import { formatDatum, formatEuro, laenderName, LEER, oderLeer } from '../format'
+import { formatDatum, formatEuro, laenderName } from '../format'
+
+// Only the filled ones, as a group; nothing if all are empty.
+function OptionaleZeilen({ zeilen }: { zeilen: [label: string, wert: string][] }) {
+  const gefuellt = zeilen.filter(([, wert]) => wert)
+  if (gefuellt.length === 0) return null
+  return (
+    <Stack spacing={0.5}>
+      {gefuellt.map(([label, wert]) => (
+        <Zeile key={label} label={label} wert={wert} />
+      ))}
+    </Stack>
+  )
+}
 
 function MietvertragKarte({ mietvertrag: mv, onEdit }: { mietvertrag: Mietvertrag; onEdit: () => void }) {
   const p = mv.mieter
+  const adresse = [`${p.strasse} ${p.hausnummer}`.trim(), `${p.plz} ${p.ort}`.trim()].filter(Boolean)
   return (
     <InfoKarte
       titel={`${p.vorname} ${p.nachname}`}
@@ -28,32 +42,39 @@ function MietvertragKarte({ mietvertrag: mv, onEdit }: { mietvertrag: Mietvertra
       }
     >
       <Stack spacing={2}>
-        <div>
-          <Typography>{oderLeer(`${p.strasse} ${p.hausnummer}`.trim())}</Typography>
-          <Typography>{oderLeer(`${p.plz} ${p.ort}`.trim())}</Typography>
-          <Typography>{laenderName(p.land)}</Typography>
-        </div>
-        <Stack spacing={0.5}>
-          <Zeile label="Telefon" wert={oderLeer(p.telefon)} />
-          <Zeile label="E-Mail" wert={oderLeer(p.email)} />
-          <Zeile label="Geburtsdatum" wert={formatDatum(p.geburtsdatum)} />
-        </Stack>
-        <Stack spacing={0.5}>
-          <Zeile label="Kontoinhaber" wert={oderLeer(p.kontoinhaber)} />
-          <Zeile label="IBAN" wert={oderLeer(p.iban)} />
-        </Stack>
+        {/* Land only together with at least one other address line. */}
+        {adresse.length > 0 && (
+          <div>
+            {adresse.map((zeile) => (
+              <Typography key={zeile}>{zeile}</Typography>
+            ))}
+            <Typography>{laenderName(p.land)}</Typography>
+          </div>
+        )}
+        <OptionaleZeilen
+          zeilen={[
+            ['Telefon', p.telefon],
+            ['E-Mail', p.email],
+            ['Geburtsdatum', p.geburtsdatum ? formatDatum(p.geburtsdatum) : ''],
+          ]}
+        />
+        <OptionaleZeilen
+          zeilen={[
+            ['Kontoinhaber', p.kontoinhaber],
+            ['IBAN', p.iban],
+          ]}
+        />
         <Stack spacing={0.5}>
           <Zeile label="Vertragsbeginn" wert={formatDatum(mv.beginn)} />
-          <Zeile label="Vertragsende" wert={formatDatum(mv.ende)} />
+          <Zeile label="Vertragsende" wert={mv.ende ? formatDatum(mv.ende) : 'unbefristet'} />
           <Zeile label="Kaltmiete" wert={formatEuro(mv.kaltmiete)} />
           <Zeile label="Nebenkosten" wert={formatEuro(mv.nebenkosten)} />
           <Zeile label="Kaution" wert={formatEuro(mv.kaution)} />
           <Zeile label="Objekt" wert={`${mv.mietobjekt_name} – ${mv.einheit_name}`} />
         </Stack>
-        {/* Both come from Buchungen, which do not exist yet. */}
         <Stack spacing={0.5}>
-          <Zeile label="Einnahmen seit Beginn" wert={LEER} />
-          <Zeile label="Kosten seit Beginn" wert={LEER} />
+          <Zeile label="Einnahmen seit Beginn" wert={formatEuro(mv.einnahmen_seit_beginn, 2)} />
+          <Zeile label="Kosten seit Beginn" wert={formatEuro(mv.kosten_seit_beginn, 2)} />
         </Stack>
       </Stack>
     </InfoKarte>

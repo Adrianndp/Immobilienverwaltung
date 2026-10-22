@@ -1,7 +1,39 @@
-from django.db import transaction
+from decimal import Decimal
+
+from django.db import models, transaction
+from django.db.models import F, OuterRef, Subquery, Sum
+from django.db.models.functions import Coalesce, Round
 from rest_framework import permissions, serializers, viewsets
 
-from ..models import Mietobjekt
+from ..models import Mietobjekt, RechnungsAnteil, Zuordnung
+
+GELD = models.DecimalField(max_digits=12, decimal_places=2)
+
+
+def mit_ergebnis(qs):
+    """Adds erwirtschafteter_betrag: Zuordnungen to its Mietverträge minus its share of all Rechnungen."""
+    einnahmen = (
+        Zuordnung.objects.filter(mietvertrag__einheit__mietobjekt=OuterRef("pk"))
+        .order_by()
+        .values("mietvertrag__einheit__mietobjekt")
+        .annotate(summe=Sum("betrag"))
+        .values("summe")
+    )
+    kosten = (
+        RechnungsAnteil.objects.filter(mietobjekt=OuterRef("pk"))
+        .order_by()
+        .values("mietobjekt")
+        .annotate(summe=Sum(Round(F("rechnung__betrag") * F("prozent") / Decimal("100"), 2), output_field=GELD))
+        .values("summe")
+    )
+    return qs.annotate(
+        erwirtschafteter_betrag=Round(
+            Coalesce(Subquery(einnahmen), Decimal("0"), output_field=GELD)
+            - Coalesce(Subquery(kosten), Decimal("0"), output_field=GELD),
+            2,
+            output_field=GELD,
+        )
+    )
 
 
 def naechste_farbe(eigentuemer):
@@ -13,6 +45,8 @@ def naechste_farbe(eigentuemer):
 class MietobjektSerializer(serializers.ModelSerializer):
     restschuld = serializers.SerializerMethodField()
     bodenrichtwert = serializers.SerializerMethodField()
+    # Annotated by mit_ergebnis().
+    erwirtschafteter_betrag = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Mietobjekt
@@ -64,7 +98,15 @@ class MietobjektViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Mietobjekt.objects.filter(eigentuemer=self.request.user).prefetch_related("darlehen", "bodenrichtwerte")
+        return mit_ergebnis(
+            Mietobjekt.objects.filter(eigentuemer=self.request.user).prefetch_related("darlehen", "bodenrichtwerte")
+        )
 
+    # Reload after saving so the response has the annotated erwirtschafteter_betrag.
     def perform_create(self, serializer):
         serializer.save(eigentuemer=self.request.user)
+        serializer.instance = self.get_queryset().get(pk=serializer.instance.pk)
+
+    def perform_update(self, serializer):
+        serializer.save()
+        serializer.instance = self.get_queryset().get(pk=serializer.instance.pk)

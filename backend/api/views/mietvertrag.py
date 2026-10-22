@@ -1,9 +1,50 @@
-from django.db import transaction
-from django.db.models import Q
+from datetime import date
+from decimal import Decimal
+
+from django.db import models, transaction
+from django.db.models import Count, F, OuterRef, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce, Round
 from django.utils import timezone
 from rest_framework import permissions, serializers, viewsets
 
-from ..models import Mieter, Mietvertrag
+from ..models import Einheit, Mieter, Mietvertrag, RechnungsAnteil, Zuordnung
+
+GELD = models.DecimalField(max_digits=12, decimal_places=2)
+
+
+def mit_summen(qs):
+    """Adds einnahmen_seit_beginn and kosten_seit_beginn (the Einheit's equal share of the Mietobjekt's Rechnungen)."""
+    einnahmen = (
+        Zuordnung.objects.filter(mietvertrag=OuterRef("pk"))
+        .order_by()
+        .values("mietvertrag")
+        .annotate(summe=Sum("betrag"))
+        .values("summe")
+    )
+    kosten = (
+        RechnungsAnteil.objects.filter(
+            mietobjekt=OuterRef("einheit__mietobjekt"),
+            rechnung__datum__gte=OuterRef("beginn"),
+            rechnung__datum__lte=Coalesce(OuterRef("ende"), Value(date.max), output_field=models.DateField()),
+        )
+        .order_by()
+        .values("mietobjekt")
+        .annotate(summe=Sum(Round(F("rechnung__betrag") * F("prozent") / Decimal("100"), 2), output_field=GELD))
+        .values("summe")
+    )
+    einheiten = (
+        Einheit.objects.filter(mietobjekt=OuterRef("einheit__mietobjekt"))
+        .order_by()
+        .values("mietobjekt")
+        .annotate(anzahl=Count("pk"))
+        .values("anzahl")
+    )
+    return qs.annotate(
+        einnahmen_seit_beginn=Coalesce(Subquery(einnahmen), Decimal("0"), output_field=GELD),
+        kosten_seit_beginn=Round(
+            Coalesce(Subquery(kosten), Decimal("0"), output_field=GELD) / Subquery(einheiten), 2, output_field=GELD
+        ),
+    )
 
 
 class MieterSerializer(serializers.ModelSerializer):
@@ -17,6 +58,9 @@ class MietvertragSerializer(serializers.ModelSerializer):
     einheit_name = serializers.CharField(source="einheit.name", read_only=True)
     mietobjekt_name = serializers.CharField(source="einheit.mietobjekt.name", read_only=True)
     farbe = serializers.CharField(source="einheit.mietobjekt.farbe", read_only=True)
+    # Annotated by mit_summen().
+    einnahmen_seit_beginn = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    kosten_seit_beginn = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Mietvertrag
@@ -57,7 +101,7 @@ class MietvertragViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = (
+        qs = mit_summen(
             Mietvertrag.objects.filter(mieter__eigentuemer=self.request.user)
             .select_related("mieter", "einheit__mietobjekt")
             .order_by("mieter__nachname", "mieter__vorname")
@@ -71,6 +115,15 @@ class MietvertragViewSet(viewsets.ModelViewSet):
         if status == "archiv":
             return qs.filter(ende__lt=heute)
         return qs
+
+    # Reload after saving so the response has the annotated sums, matching the new beginn/ende/einheit.
+    def perform_create(self, serializer):
+        serializer.save()
+        serializer.instance = mit_summen(Mietvertrag.objects.filter(pk=serializer.instance.pk)).get()
+
+    def perform_update(self, serializer):
+        serializer.save()
+        serializer.instance = mit_summen(Mietvertrag.objects.filter(pk=serializer.instance.pk)).get()
 
     def perform_destroy(self, instance):
         # One card = one Mietvertrag with its Mieter, so the Mieter goes too unless they have other contracts.

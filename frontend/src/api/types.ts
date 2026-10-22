@@ -79,6 +79,8 @@ export interface Mietobjekt {
   restschuld: string | null
   // €/m², the entry with the newest datum, null without Bodenrichtwerte.
   bodenrichtwert: string | null
+  // Zuordnungen to its Mietverträge minus its share of all Rechnungen.
+  erwirtschafteter_betrag: string
 }
 
 export type MietobjektInput = Pick<
@@ -136,11 +138,15 @@ export interface Mietvertrag {
   einheit_name: string
   mietobjekt_name: string
   farbe: Farbe
+  // Zuordnungen to this contract.
+  einnahmen_seit_beginn: string
+  // The Einheit's equal share of the Mietobjekt's Rechnungen dated within the contract.
+  kosten_seit_beginn: string
 }
 
 export type MietvertragInput = Omit<
   Mietvertrag,
-  'id' | 'mieter' | 'einheit_name' | 'mietobjekt_name' | 'farbe'
+  'id' | 'mieter' | 'einheit_name' | 'mietobjekt_name' | 'farbe' | 'einnahmen_seit_beginn' | 'kosten_seit_beginn'
 > & { mieter: Omit<Mieter, 'id'> }
 
 export type Kategorie = 'SONSTIGE' | 'INSTANDHALTUNG' | 'ABSCHREIBUNG'

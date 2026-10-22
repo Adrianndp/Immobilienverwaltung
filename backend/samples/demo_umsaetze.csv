@@ -1,16 +1,8 @@
 buchungstag,wertstellung,kontoinhaber,buchungstext,buchungsart,betrag
-2026-08-03,2026-08-03,Anna Schmidt,Miete August Lindenstraße 12a,Überweisung,1130.00
-2026-08-03,2026-08-03,Mehmet und Ayşe Yılmaz,Miete 08/2026 Whg EG links,Überweisung,930.00
-2026-08-04,2026-08-04,Julia Becker,Miete August Gartenweg 5,Überweisung,880.00
-2026-08-17,2026-08-17,Telekom Deutschland GmbH,Kundennr. 4711081512 MagentaZuhause M,Lastschrift,-29.99
-2026-08-28,2026-08-28,Stadtwerke Karlsruhe,Abschlag Strom Vertragskonto 300112233,Lastschrift,-85.00
-2026-09-01,2026-09-01,Anna Schmidt,Miete September Lindenstraße 12a,Überweisung,1130.00
-2026-09-01,2026-09-01,Mehmet und Ayşe Yılmaz,Miete 09/2026 Whg EG links,Überweisung,930.00
-2026-09-03,2026-09-03,Julia Becker,Miete September Gartenweg 5,Überweisung,880.00
-2026-09-15,2026-09-15,Telekom Deutschland GmbH,Kundennr. 4711081512 MagentaZuhause M,Lastschrift,-29.99
-2026-09-22,2026-09-23,Sanitär Huber GmbH,Rechnung 2026-0915 Reparatur Heizung Gartenweg 5,Überweisung,-412.50
-2026-09-29,2026-09-29,Stadtwerke Karlsruhe,Abschlag Strom Vertragskonto 300112233,Lastschrift,-85.00
 2026-10-01,2026-10-01,Anna Schmidt,Miete Oktober Lindenstraße 12a,Überweisung,1130.00
 2026-10-01,2026-10-01,Mehmet und Ayşe Yılmaz,Miete 10/2026 Whg EG links,Überweisung,930.00
 2026-10-02,2026-10-02,Julia Becker,Miete Oktober Gartenweg 5,Überweisung,880.00
+2026-10-02,2026-10-02,Lea Fischer,Miete Oktober WG Zimmer 1,Überweisung,510.00
+2026-10-05,2026-10-05,Jonas Klein,Miete Okt Kreuzstr. 31,Überweisung,480.00
+2026-10-06,2026-10-07,Sanitär Huber GmbH,Rechnung 2026-0915 Reparatur Heizung Gartenweg 5,Überweisung,-412.50
 2026-10-15,2026-10-15,Telekom Deutschland GmbH,Kundennr. 4711081512 MagentaZuhause M,Lastschrift,-29.99

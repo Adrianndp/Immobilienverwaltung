@@ -14,7 +14,7 @@ import { useMietobjekte } from '../api/hooks'
 import type { Mietobjekt } from '../api/types'
 import InfoKarte, { Zeile } from '../components/InfoKarte'
 import MietobjektDialog from '../components/MietobjektDialog'
-import { formatDatum, formatEuro, laenderName, LEER } from '../format'
+import { formatDatum, formatEuro, laenderName } from '../format'
 
 function Wertentwicklung({ kaufpreis, marktwert }: Pick<Mietobjekt, 'kaufpreis' | 'marktwert'>) {
   if (kaufpreis === null || marktwert === null || Number(kaufpreis) <= 0) return null
@@ -58,8 +58,11 @@ function MietobjektKarte({ mietobjekt: m }: { mietobjekt: Mietobjekt }) {
             wert={formatEuro(m.marktwert)}
             zusatz={<Wertentwicklung kaufpreis={m.kaufpreis} marktwert={m.marktwert} />}
           />
-          {/* Erwirtschafteter Betrag comes from Buchungen, which do not exist yet. */}
-          <Zeile label="Erwirtschafteter Betrag" wert={LEER} />
+          <Zeile
+            label="Erwirtschafteter Betrag"
+            wert={formatEuro(m.erwirtschafteter_betrag, 2)}
+            farbe={Number(m.erwirtschafteter_betrag) >= 0 ? 'success.main' : 'error.main'}
+          />
         </Stack>
       </Stack>
     </InfoKarte>

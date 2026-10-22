@@ -22,7 +22,17 @@ function InfoKarte({ titel, farbe, aktion, children }: Props) {
   )
 }
 
-export function Zeile({ label, wert, zusatz }: { label: string; wert: string; zusatz?: ReactNode }) {
+export function Zeile({
+  label,
+  wert,
+  zusatz,
+  farbe,
+}: {
+  label: string
+  wert: string
+  zusatz?: ReactNode
+  farbe?: string
+}) {
   return (
     <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
@@ -30,7 +40,7 @@ export function Zeile({ label, wert, zusatz }: { label: string; wert: string; zu
       </Typography>
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
         {zusatz}
-        <Typography variant="body2" sx={{ textAlign: 'right', overflowWrap: 'anywhere' }}>
+        <Typography variant="body2" sx={{ textAlign: 'right', overflowWrap: 'anywhere', color: farbe }}>
           {wert}
         </Typography>
       </Stack>

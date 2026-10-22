@@ -48,6 +48,7 @@ class BuchungSerializer(serializers.ModelSerializer):
     zuordnungen = ZuordnungSerializer(many=True)
     partner = serializers.SerializerMethodField()
     rechnungen = serializers.SerializerMethodField()
+    nicht_zugeordnet = serializers.SerializerMethodField()
 
     class Meta:
         model = Buchung
@@ -62,6 +63,7 @@ class BuchungSerializer(serializers.ModelSerializer):
             "zuordnungen",
             "partner",
             "rechnungen",
+            "nicht_zugeordnet",
         ]
         read_only_fields = ["buchungstag", "wertstellung", "kontoinhaber", "buchungstext", "buchungsart", "betrag"]
 
@@ -79,6 +81,10 @@ class BuchungSerializer(serializers.ModelSerializer):
 
     def get_rechnungen(self, obj):
         return ", ".join(z.rechnung.rechnungsnummer for z in obj.zuordnungen.all() if z.rechnung)
+
+    def get_nicht_zugeordnet(self, obj):
+        # From the prefetched list, like partner; positive also for outgoing Buchungen.
+        return str(abs(obj.betrag) - sum((z.betrag for z in obj.zuordnungen.all()), Decimal("0")))
 
     def validate(self, data):
         zuordnungen = data.get("zuordnungen")

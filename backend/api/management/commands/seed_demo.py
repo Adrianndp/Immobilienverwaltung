@@ -274,7 +274,8 @@ def rechnungen(start):
     """The Rechnungen of the 12 months from start (the 1st of a month), dated and paid within them.
 
     anteile: {Mietobjekt key: prozent}. bezahlt: (buchungstag, buchungsart, buchungstext), None = still open.
-    The two open ones are in the last month; samples/demo_umsaetze.csv has their payments for live assignment.
+    The two open ones are in the last month; samples/demo_umsaetze.csv has their payments for live assignment
+    (the Huber one is also seeded as an open Buchung of the current month).
     """
     liste = []
     for n in range(12):
@@ -393,10 +394,12 @@ class Command(BaseCommand):
         kostenarten = {k["name"]: Kostenart.objects.create(eigentuemer=user, **k) for k in KOSTENARTEN}
         lieferanten = {name: Lieferant.objects.create(eigentuemer=user, **daten) for name, daten in LIEFERANTEN.items()}
 
-        # The 12 full months before the current one; the current month is left for samples/demo_umsaetze.csv.
+        # The 12 full months before the current one, all assigned. The current month only gets the open Buchungen
+        # below; the rest of it is left for samples/demo_umsaetze.csv.
         dieser_monat = timezone.localdate().replace(day=1)
         start, ende = plus_monate(dieser_monat, -12), dieser_monat - timedelta(days=1)
 
+        offene_rechnungen = {}
         for daten in rechnungen(start):
             rechnung = Rechnung.objects.create(
                 lieferant=lieferanten[daten["lieferant"]],
@@ -408,6 +411,8 @@ class Command(BaseCommand):
             if daten["bezahlt"]:
                 tag, art, text = daten["bezahlt"]
                 self.buchen(user, tag, daten["lieferant"], text, art, -rechnung.betrag, rechnung=rechnung)
+            else:
+                offene_rechnungen[daten["lieferant"]] = rechnung
 
         # Rent for every month, from every contract that ran in that month.
         for n in range(12):
@@ -434,14 +439,56 @@ class Command(BaseCommand):
                     rate = monat["zins"] + monat["tilgung"]
                     self.buchen(user, monat["datum"], d.bank, text, "Lastschrift", -rate, darlehen=d)
 
-    def buchen(self, user, tag, kontoinhaber, text, art, betrag, **ziel):
+        self.offene_buchungen(user, dieser_monat, {v.mieter.nachname: v for v in vertraege}, offene_rechnungen)
+
+    def offene_buchungen(self, user, dieser_monat, vertraege, offene_rechnungen):
+        """Buchungen of the current month that are not or only partly assigned, to try out the Zuordnung.
+
+        The rent and Huber rows are the same as in samples/demo_umsaetze.csv, so importing it in that month
+        skips them instead of adding them twice.
+        """
+
+        def tag(n):
+            # Not in the future when seeded early in the month.
+            return min(dieser_monat.replace(day=n), timezone.localdate())
+
+        monat = MONATE[dieser_monat.month - 1]
+        for v, n, text in [
+            (vertraege["Schmidt"], 1, f"Miete {monat} Lindenstraße 12a"),
+            (vertraege["Yılmaz"], 1, f"Miete {dieser_monat:%m/%Y} Whg EG links"),
+        ]:
+            self.buchen(user, tag(n), v.mieter.kontoinhaber, text, "Überweisung", v.kaltmiete + v.nebenkosten)
+
+        huber = offene_rechnungen["Sanitär Huber GmbH"]
+        self.buchen(
+            user, tag(6), "Sanitär Huber GmbH", f"Rechnung {huber.rechnungsnummer} {huber.name} Gartenweg 5",
+            "Überweisung", -huber.betrag, wertstellung=tag(7),
+        )  # fmt: skip
+        # No Rechnung for this one.
+        self.buchen(
+            user, tag(12), "Hanse Versicherung AG",
+            f"Vers.-Nr. 90417 Haus- und Grundbesitzerhaftpflicht {dieser_monat.year}/{dieser_monat.year + 1}",
+            "Lastschrift", D("-156.80"),
+        )  # fmt: skip
+
+        # Half of it assigned, the rest open.
+        klein = vertraege["Klein"]
+        miete = klein.kaltmiete + klein.nebenkosten
+        self.buchen(
+            user, tag(5), klein.mieter.kontoinhaber, f"Miete {monat[:3]} Kreuzstr. 31", "Überweisung", miete,
+            zugeordnet=miete / 2, mietvertrag=klein,
+        )  # fmt: skip
+
+    def buchen(self, user, tag, kontoinhaber, text, art, betrag, wertstellung=None, zugeordnet=None, **ziel):
+        """Assigned to ziel (only the amount zugeordnet, if given); without ziel the Buchung stays open."""
         buchung = Buchung.objects.create(
             eigentuemer=user,
             buchungstag=tag,
-            wertstellung=tag,
+            wertstellung=wertstellung or tag,
             kontoinhaber=kontoinhaber,
             buchungstext=text,
             buchungsart=art,
             betrag=betrag,
         )
-        Zuordnung.objects.create(buchung=buchung, betrag=abs(betrag), **ziel)
+        if ziel:
+            Zuordnung.objects.create(buchung=buchung, betrag=zugeordnet or abs(betrag), **ziel)

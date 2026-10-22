@@ -141,6 +141,14 @@ class BuchungTests(ApiTestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["partner"], "Anna Schmidt")
 
+    def test_nicht_zugeordnet(self):
+        buchung = self.buchung("-1000")
+        self.assertEqual(self.client.get("/api/buchungen/").json()[0]["nicht_zugeordnet"], "1000.00")
+
+        r = self.zuordnen(buchung, betrag="400", rechnung=self.rechnung.id)
+
+        self.assertEqual(r.json()["nicht_zugeordnet"], "600.00")
+
     def test_eingang_kann_keiner_rechnung_zugeordnet_werden(self):
         r = self.zuordnen(self.buchung("400"), betrag="400", rechnung=self.rechnung.id)
 

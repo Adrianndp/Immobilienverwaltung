@@ -284,6 +284,8 @@ export interface Buchung {
   zuordnungen: Zuordnung[]
   partner: string
   rechnungen: string
+  // abs(betrag) minus the Zuordnungen, so also positive for outgoing Buchungen.
+  nicht_zugeordnet: string
 }
 
 export interface BuchungImport {

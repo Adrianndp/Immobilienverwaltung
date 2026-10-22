@@ -10,6 +10,7 @@ from rest_framework.test import APIClient, APITestCase
 from .models import (
     Buchung,
     Darlehen,
+    Einheit,
     Kostenart,
     Lieferant,
     Mieter,
@@ -279,3 +280,38 @@ class WegAnteilTests(ApiTestCase):
     def test_anteil_allein_aendern_nutzt_den_gespeicherten_nenner(self):
         self.assertEqual(self.patch(weg_anteil="60").status_code, 200)
         self.assertEqual(self.patch(weg_nenner=None).status_code, 400)
+
+
+class EinheitLoeschenTests(ApiTestCase):
+    def loeschen(self, einheit):
+        return self.client.delete(f"/api/einheiten/{einheit.id}/")
+
+    def test_einheit_mit_vertrag_wird_nicht_geloescht(self):
+        einheit = self.vertrag.einheit
+        self.objekt.einheiten.create(name="Zweite")
+
+        antwort = self.loeschen(einheit)
+
+        self.assertEqual(antwort.status_code, 400)
+        self.assertEqual(antwort.json()["detail"], "Einheit hat Mietverträge und kann nicht gelöscht werden.")
+        self.assertTrue(Einheit.objects.filter(pk=einheit.pk).exists())
+
+    def test_einzige_einheit_bei_vermietung_im_ganzen_bleibt(self):
+        einheit = self.objekt.einheiten.create(name="Gesamt")
+        andere = mietobjekt(self.user)  # vermietung GANZ
+        einzige = andere.einheiten.create(name="Gesamt")
+
+        self.assertEqual(self.loeschen(einzige).status_code, 400)
+        # With another Einheit beside it, an Einheit without contracts can go.
+        self.assertEqual(self.loeschen(einheit).status_code, 204)
+
+    def test_hat_vertraege_und_umbenennen(self):
+        frei = self.objekt.einheiten.create(name="Frei")
+
+        antwort = self.client.patch(f"/api/einheiten/{frei.id}/", {"name": "Neu"}, format="json")
+
+        self.assertEqual(
+            antwort.json(), {"id": frei.id, "mietobjekt": self.objekt.id, "name": "Neu", "hat_vertraege": False}
+        )
+        liste = {e["id"]: e["hat_vertraege"] for e in self.client.get("/api/einheiten/").json()}
+        self.assertTrue(liste[self.vertrag.einheit_id])

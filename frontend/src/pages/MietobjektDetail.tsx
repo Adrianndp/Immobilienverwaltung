@@ -10,10 +10,14 @@ import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
 import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
@@ -23,6 +27,8 @@ import {
   useDeleteEinheit,
   useEinheiten,
   useMietobjekt,
+  useMietvertraege,
+  useUpdateEinheit,
   useUpdateMietobjekt,
 } from '../api/hooks'
 import {
@@ -30,19 +36,23 @@ import {
   OBJEKTART_LABELS,
   VERMIETUNG_LABELS,
   WEG_OBJEKTARTEN,
+  vertragsStatus,
   type Einheit,
   type Mietobjekt,
+  type Mietvertrag,
   type Nutzung,
   type Objektart,
+  type Vermietung,
 } from '../api/types'
 import BodenrichtwertDialog from '../components/BodenrichtwertDialog'
 import DarlehenDialog from '../components/DarlehenDialog'
 import FarbAuswahl from '../components/FarbAuswahl'
 import Laden, { Ladefehler } from '../components/Laden'
 import LoeschenDialog from '../components/LoeschenDialog'
+import MietvertragDialog from '../components/MietvertragDialog'
 import { useMeldung } from '../components/meldung'
 import WegAnteilFeld from '../components/WegAnteilFeld'
-import { dezimal, formatEuro, laenderName } from '../format'
+import { dezimal, formatDatum, formatEuro, heuteIso, laenderName } from '../format'
 
 type Feld = Exclude<keyof Mietobjekt, 'id'>
 type Fehler = Partial<Record<string, string[]>>
@@ -149,9 +159,10 @@ interface FormularProps {
   mietobjekt: Mietobjekt
   onDarlehen: () => void
   onBodenrichtwert: () => void
+  onGespeichert: () => void
 }
 
-function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: FormularProps) {
+function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert, onGespeichert }: FormularProps) {
   const meldung = useMeldung()
   const updateMietobjekt = useUpdateMietobjekt()
   const [gespeichert, setGespeichert] = useState(mietobjekt)
@@ -212,6 +223,7 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
       )
       const neu = await updateMietobjekt(mietobjekt.id, daten)
       setGespeichert(neu)
+      onGespeichert()
       setWerte(neu)
       meldung('Gespeichert')
     } catch (e) {
@@ -406,16 +418,47 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
   )
 }
 
-function Einheiten({ mietobjektId }: { mietobjektId: number }) {
+// The laufend Mietvertrag of the Einheit, otherwise the next zukünftig one.
+function aktuellerVertrag(einheit: Einheit, mietvertraege: Mietvertrag[], heute: string) {
+  const eigene = mietvertraege.filter((mv) => mv.einheit === einheit.id)
+  return (
+    eigene.find((mv) => vertragsStatus(mv, heute) === 'laufend') ??
+    eigene
+      .filter((mv) => vertragsStatus(mv, heute) === 'zukuenftig')
+      .sort((a, b) => a.beginn.localeCompare(b.beginn))[0]
+  )
+}
+
+// Why an Einheit cannot be deleted, the same rules as the API; undefined if it can.
+function loeschSperre(einheit: Einheit, einheiten: Einheit[], vermietung: Vermietung | '') {
+  if (einheit.hat_vertraege) return 'Einheit hat Mietverträge und kann nicht gelöscht werden.'
+  if (vermietung === 'GANZ' && einheiten.length === 1) {
+    return 'Die Einheit „Gesamt“ wird bei Vermietung im Ganzen benötigt.'
+  }
+}
+
+function Einheiten({ mietobjektId, vermietung }: { mietobjektId: number; vermietung: Vermietung | '' }) {
   const meldung = useMeldung()
   const { data: einheiten, loading, error, reload } = useEinheiten(mietobjektId)
+  const {
+    data: mietvertraege,
+    error: vertraegeFehler,
+    reload: reloadMietvertraege,
+  } = useMietvertraege()
+  const heute = heuteIso()
+  // The Einheit a new Mieter is created for.
+  const [mieterFuer, setMieterFuer] = useState<Einheit>()
   const createEinheit = useCreateEinheit()
   const deleteEinheit = useDeleteEinheit()
+  const updateEinheit = useUpdateEinheit()
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [fehler, setFehler] = useState<string>()
   const [zuLoeschen, setZuLoeschen] = useState<Einheit>()
   const [loeschend, setLoeschend] = useState(false)
+  // The Einheit whose name is being edited, with the new name.
+  const [bearbeitet, setBearbeitet] = useState<{ id: number; name: string }>()
+  const [umbenennend, setUmbenennend] = useState(false)
 
   function fehlerText(e: unknown) {
     if (e instanceof ApiError && e.status === 400 && e.body && typeof e.body === 'object') {
@@ -443,16 +486,31 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
   async function handleDelete() {
     if (!zuLoeschen) return
     setLoeschend(true)
-    setFehler(undefined)
     try {
       await deleteEinheit(zuLoeschen.id)
       reload()
       meldung('Einheit gelöscht')
     } catch (e) {
-      setFehler(fehlerText(e))
+      meldung({ text: fehlerText(e), fehler: true })
     } finally {
       setLoeschend(false)
       setZuLoeschen(undefined)
+    }
+  }
+
+  async function handleUmbenennen(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!bearbeitet) return
+    setUmbenennend(true)
+    try {
+      await updateEinheit(bearbeitet.id, { name: bearbeitet.name })
+      setBearbeitet(undefined)
+      reload()
+      meldung('Einheit umbenannt')
+    } catch (e) {
+      meldung({ text: fehlerText(e), fehler: true })
+    } finally {
+      setUmbenennend(false)
     }
   }
 
@@ -463,22 +521,122 @@ function Einheiten({ mietobjektId }: { mietobjektId: number }) {
       </Typography>
       {loading && <Laden klein />}
       {error && <Ladefehler text="Einheiten konnten nicht geladen werden." error={error} />}
+      {vertraegeFehler && <Ladefehler text="Mieter konnten nicht geladen werden." error={vertraegeFehler} />}
+      {einheiten && <Typography variant="body2">Anzahl Verträge: {einheiten.length}</Typography>}
       {einheiten?.length === 0 && <Typography color="text.secondary">Noch keine Einheiten.</Typography>}
       <List dense>
-        {einheiten?.map((e) => (
-          <ListItem
-            key={e.id}
-            disableGutters
-            secondaryAction={
-              <IconButton edge="end" aria-label={`Einheit ${e.name} löschen`} onClick={() => setZuLoeschen(e)}>
-                <DeleteIcon />
-              </IconButton>
-            }
-          >
-            <ListItemText primary={e.name} />
-          </ListItem>
-        ))}
+        {einheiten?.map((e, i) => {
+          const mv = mietvertraege && aktuellerVertrag(e, mietvertraege, heute)
+          const status = mv && vertragsStatus(mv, heute)
+          const name = mv && `${mv.mieter.vorname} ${mv.mieter.nachname}`
+          const sperre = loeschSperre(e, einheiten, vermietung)
+          const mieterText =
+            mietvertraege &&
+            (mv ? `${name}${status === 'zukuenftig' ? ` (ab ${formatDatum(mv.beginn)})` : ''}` : 'nicht vermietet')
+
+          if (bearbeitet?.id === e.id) {
+            return (
+              <ListItem key={e.id} disableGutters>
+                <Typography sx={{ width: 32, flexShrink: 0, color: 'text.secondary' }}>{i + 1}</Typography>
+                <Stack
+                  component="form"
+                  onSubmit={handleUmbenennen}
+                  direction="row"
+                  spacing={1}
+                  sx={{ flexGrow: 1, alignItems: 'center', py: 0.5 }}
+                >
+                  <TextField
+                    label="Name"
+                    size="small"
+                    value={bearbeitet.name}
+                    onChange={(ev) => setBearbeitet({ id: e.id, name: ev.target.value })}
+                    onKeyDown={(ev) => ev.key === 'Escape' && setBearbeitet(undefined)}
+                    required
+                    fullWidth
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  <IconButton type="submit" aria-label="Name speichern" loading={umbenennend}>
+                    <CheckIcon />
+                  </IconButton>
+                  <IconButton aria-label="Abbrechen" onClick={() => setBearbeitet(undefined)}>
+                    <CloseIcon />
+                  </IconButton>
+                </Stack>
+              </ListItem>
+            )
+          }
+
+          return (
+            <ListItem
+              key={e.id}
+              disableGutters
+              // Room for the three buttons; the default only fits one.
+              sx={{ pr: 16 }}
+              secondaryAction={
+                <>
+                  {mv ? (
+                    <IconButton
+                      component={Link}
+                      to={`/mieter?status=${status}&vertrag=${mv.id}`}
+                      aria-label={`Mietvertrag von ${name} öffnen`}
+                    >
+                      <OpenInNewIcon />
+                    </IconButton>
+                  ) : (
+                    <IconButton
+                      aria-label={`Mieter für ${e.name} anlegen`}
+                      onClick={() => setMieterFuer(e)}
+                      // Until the Mietverträge are loaded it is not known whether there is one.
+                      disabled={!mietvertraege}
+                    >
+                      <OpenInNewIcon />
+                    </IconButton>
+                  )}
+                  <IconButton
+                    aria-label={`Einheit ${e.name} umbenennen`}
+                    onClick={() => setBearbeitet({ id: e.id, name: e.name })}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  {sperre ? (
+                    // A disabled button gets no mouse events; the span carries the tooltip and keyboard focus.
+                    <Tooltip title={sperre} enterTouchDelay={0} leaveTouchDelay={4000}>
+                      <span tabIndex={0}>
+                        <IconButton edge="end" aria-label={`Einheit ${e.name} löschen`} disabled>
+                          <DeleteIcon />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    <IconButton edge="end" aria-label={`Einheit ${e.name} löschen`} onClick={() => setZuLoeschen(e)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
+                </>
+              }
+            >
+              <Typography sx={{ width: 32, flexShrink: 0, color: 'text.secondary' }}>{i + 1}</Typography>
+              <ListItemText
+                primary={e.name}
+                secondary={mieterText}
+                slotProps={{ secondary: { sx: { color: mv ? 'text.primary' : 'text.secondary' } } }}
+              />
+            </ListItem>
+          )
+        })}
       </List>
+      {mieterFuer && (
+        <MietvertragDialog
+          einheit={mieterFuer.id}
+          onClose={() => setMieterFuer(undefined)}
+          // The new Mietvertrag also changes hat_vertraege.
+          onSaved={() => {
+            reloadMietvertraege()
+            reload()
+          }}
+        />
+      )}
       <LoeschenDialog
         offen={!!zuLoeschen}
         titel="Einheit löschen?"
@@ -533,8 +691,9 @@ function MietobjektDetail() {
             mietobjekt={mietobjekt}
             onDarlehen={() => setDarlehenOpen(true)}
             onBodenrichtwert={() => setBodenrichtwertOpen(true)}
+            onGespeichert={reload}
           />
-          <Einheiten mietobjektId={mietobjekt.id} />
+          <Einheiten mietobjektId={mietobjekt.id} vermietung={mietobjekt.vermietung} />
           {/* Outside the form: React submit events would bubble through the Dialog's portal. */}
           {darlehenOpen && (
             <DarlehenDialog mietobjekt={mietobjekt} onClose={() => setDarlehenOpen(false)} onSaved={reload} />

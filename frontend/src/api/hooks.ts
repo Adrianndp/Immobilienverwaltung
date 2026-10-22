@@ -70,6 +70,10 @@ export function useCreateEinheit() {
   return (data: EinheitInput) => apiRequest<Einheit>('POST', '/einheiten/', data)
 }
 
+export function useUpdateEinheit() {
+  return (id: number, data: Partial<EinheitInput>) => apiRequest<Einheit>('PATCH', `/einheiten/${id}/`, data)
+}
+
 export function useDeleteEinheit() {
   return (id: number) => apiRequest<void>('DELETE', `/einheiten/${id}/`)
 }

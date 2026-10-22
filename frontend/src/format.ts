@@ -11,6 +11,12 @@ export function laenderName(code: string) {
   }
 }
 
+// Today in local time as "YYYY-MM-DD", comparable with the API's date strings.
+export function heuteIso() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 // German input "1.234,56" or "1234,56" -> "1234.56" for the API; input with a dot stays as it is.
 export function dezimal(eingabe: string) {
   return eingabe.includes(',') ? eingabe.replace(/\./g, '').replace(',', '.') : eingabe

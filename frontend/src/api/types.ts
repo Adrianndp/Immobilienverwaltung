@@ -102,9 +102,11 @@ export interface Einheit {
   id: number
   mietobjekt: number
   name: string
+  // Any Mietvertrag, also future and ended ones; such an Einheit cannot be deleted.
+  hat_vertraege: boolean
 }
 
-export type EinheitInput = Omit<Einheit, 'id'>
+export type EinheitInput = Omit<Einheit, 'id' | 'hat_vertraege'>
 
 export interface Mieter {
   id: number
@@ -133,6 +135,13 @@ export const MIETVERTRAG_STATUS_LABELS: Record<MietvertragStatus, string> = {
 // The ?status= URL parameter; missing or unknown values mean laufend.
 export function mietvertragStatus(param: string | null): MietvertragStatus {
   return param !== null && param in MIETVERTRAG_STATUS_LABELS ? (param as MietvertragStatus) : 'laufend'
+}
+
+// Same rules as the API's ?status= filter. heute as "YYYY-MM-DD", like the API's dates.
+export function vertragsStatus(mv: Pick<Mietvertrag, 'beginn' | 'ende'>, heute: string): MietvertragStatus {
+  if (mv.beginn > heute) return 'zukuenftig'
+  if (mv.ende !== null && mv.ende < heute) return 'archiv'
+  return 'laufend'
 }
 
 export interface Mietvertrag {

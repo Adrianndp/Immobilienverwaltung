@@ -52,13 +52,13 @@ const MIETER_FELDER: MieterFeld[] = [
   'iban',
 ]
 
-function anfangswerte(mv?: Mietvertrag): Formular {
+function anfangswerte(mv?: Mietvertrag, einheit?: number): Formular {
   const mieter = Object.fromEntries(
     MIETER_FELDER.map((f) => [f, mv ? (mv.mieter[f] ?? '') : f === 'land' ? 'DE' : '']),
   ) as Formular['mieter']
   return {
     mieter,
-    einheit: mv?.einheit ?? '',
+    einheit: mv?.einheit ?? einheit ?? '',
     beginn: mv?.beginn ?? '',
     ende: mv?.ende ?? '',
     kaltmiete: mv?.kaltmiete ?? '',
@@ -100,18 +100,20 @@ function Zelle({ children, breite = 6 }: { children: ReactNode; breite?: number 
 interface Props {
   // Without a Mietvertrag the dialog creates a new one.
   mietvertrag?: Mietvertrag
+  // Preselected Einheit for a new Mietvertrag.
+  einheit?: number
   onClose: () => void
   onSaved: () => void
 }
 
-function MietvertragDialog({ mietvertrag, onClose, onSaved }: Props) {
+function MietvertragDialog({ mietvertrag, einheit, onClose, onSaved }: Props) {
   const meldung = useMeldung()
   const vollbild = useVollbild()
   const createMietvertrag = useCreateMietvertrag()
   const updateMietvertrag = useUpdateMietvertrag()
   const { data: mietobjekte } = useMietobjekte()
   const { data: einheiten } = useEinheiten()
-  const [werte, setWerte] = useState(() => anfangswerte(mietvertrag))
+  const [werte, setWerte] = useState(() => anfangswerte(mietvertrag, einheit))
   const [fehler, setFehler] = useState<Record<string, string>>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()
   const [saving, setSaving] = useState(false)

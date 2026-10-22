@@ -5,7 +5,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useMietvertraege } from '../api/hooks'
 import { mietvertragStatus, type Mietvertrag } from '../api/types'
@@ -81,11 +81,38 @@ function MietvertragKarte({ mietvertrag: mv, onEdit }: { mietvertrag: Mietvertra
 }
 
 function Mieter() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const status = mietvertragStatus(searchParams.get('status'))
   const { data: mietvertraege, loading, error, reload } = useMietvertraege(status)
   // undefined: closed, null: create, Mietvertrag: edit.
   const [dialog, setDialog] = useState<Mietvertrag | null>()
+  // ?vertrag=<id>, e.g. from the Einheiten of a Mietobjekt: that card is scrolled to and outlined briefly.
+  const zielVertrag = Number(searchParams.get('vertrag')) || undefined
+  const [hervorgehoben, setHervorgehoben] = useState<number>()
+  const hervorgehobeneKarte = useRef<HTMLDivElement>(null)
+
+  // Set while rendering (React's pattern for state derived from changed input), not in an effect.
+  if (zielVertrag && mietvertraege && hervorgehoben !== zielVertrag) setHervorgehoben(zielVertrag)
+
+  useEffect(() => {
+    if (!zielVertrag || !mietvertraege) return
+    // Only once: a reload or the back button should not highlight it again.
+    setSearchParams(
+      (params) => {
+        params.delete('vertrag')
+        return params
+      },
+      { replace: true },
+    )
+  }, [zielVertrag, mietvertraege, setSearchParams])
+
+  useEffect(() => {
+    if (hervorgehoben === undefined) return
+    const ruhig = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    hervorgehobeneKarte.current?.scrollIntoView({ behavior: ruhig ? 'auto' : 'smooth', block: 'center' })
+    const timer = setTimeout(() => setHervorgehoben(undefined), 2000)
+    return () => clearTimeout(timer)
+  }, [hervorgehoben])
 
   const anlegen = (
     <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialog(null)}>
@@ -118,7 +145,18 @@ function Mieter() {
 
       <Grid container spacing={2}>
         {mietvertraege?.map((mv) => (
-          <Grid key={mv.id} size={{ xs: 12, md: 6 }}>
+          <Grid
+            key={mv.id}
+            ref={mv.id === hervorgehoben ? hervorgehobeneKarte : undefined}
+            size={{ xs: 12, md: 6 }}
+            sx={{
+              borderRadius: 1,
+              outline: 3,
+              outlineOffset: 2,
+              outlineColor: mv.id === hervorgehoben ? mv.farbe : 'transparent',
+              transition: 'outline-color 0.5s',
+            }}
+          >
             <MietvertragKarte mietvertrag={mv} onEdit={() => setDialog(mv)} />
           </Grid>
         ))}

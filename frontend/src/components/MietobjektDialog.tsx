@@ -9,6 +9,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import { useState, type FormEvent } from 'react'
+import { validierungsFehler } from '../api/client'
 import { useCreateMietobjekt } from '../api/hooks'
 import {
   NUTZUNG_LABELS,
@@ -32,10 +33,12 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
   const createMietobjekt = useCreateMietobjekt()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
+  const [fehler, setFehler] = useState<Record<string, string>>({})
   const [nutzung, setNutzung] = useState<Nutzung>('VERMIETUNG')
 
   function close() {
     setError(undefined)
+    setFehler({})
     setNutzung('VERMIETUNG')
     onClose()
   }
@@ -45,16 +48,31 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
     const data = Object.fromEntries(new FormData(event.currentTarget)) as unknown as MietobjektInput
     if (nutzung === 'EIGEN') data.vermietung = ''
     setSaving(true)
+    setError(undefined)
+    setFehler({})
     try {
       await createMietobjekt(data)
       onCreated()
       meldung('Mietobjekt angelegt')
       close()
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      // Field errors under their field, like in the other dialogs; only the rest goes to the top.
+      const felder = validierungsFehler(e)
+      if (felder) {
+        const { non_field_errors, detail, ...rest } = felder
+        setFehler(rest)
+        const allgemein = [non_field_errors, detail].filter(Boolean).join(' ')
+        if (allgemein) setError(allgemein)
+      } else {
+        setError(e instanceof Error ? e.message : String(e))
+      }
     } finally {
       setSaving(false)
     }
+  }
+
+  function fehlerProps(name: string, hinweis?: string) {
+    return { error: !!fehler[name], helperText: fehler[name] ?? hinweis }
   }
 
   return (
@@ -64,8 +82,8 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
-            <TextField name="name" label="Name" helperText="z. B. Wohnung 1" required autoComplete="off" />
-            <TextField select name="objektart" label="Objektart" defaultValue="ETW" required>
+            <TextField name="name" label="Name" required autoComplete="off" {...fehlerProps('name', 'z. B. Wohnung 1')} />
+            <TextField select name="objektart" label="Objektart" defaultValue="ETW" required {...fehlerProps('objektart')}>
               {Object.entries(OBJEKTART_LABELS).map(([value, label]) => (
                 <MenuItem key={value} value={value}>
                   {label}
@@ -81,6 +99,7 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
                 onChange={(e) => setNutzung(e.target.value as Nutzung)}
                 required
                 fullWidth
+                {...fehlerProps('nutzung')}
               >
                 {Object.entries(NUTZUNG_LABELS).map(([value, label]) => (
                   <MenuItem key={value} value={value}>
@@ -96,6 +115,7 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
                   defaultValue="GANZ"
                   required
                   fullWidth
+                  {...fehlerProps('vermietung')}
                 >
                   {Object.entries(VERMIETUNG_LABELS).map(([value, label]) => (
                     <MenuItem key={value} value={value}>
@@ -106,8 +126,8 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
               )}
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField name="strasse" label="Straße" required fullWidth autoComplete="off" />
-              <TextField name="hausnummer" label="Hausnummer" required autoComplete="off" />
+              <TextField name="strasse" label="Straße" required fullWidth autoComplete="off" {...fehlerProps('strasse')} />
+              <TextField name="hausnummer" label="Hausnummer" required autoComplete="off" {...fehlerProps('hausnummer')} />
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
@@ -115,9 +135,10 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
                 label="PLZ"
                 required
                 autoComplete="off"
+                {...fehlerProps('plz')}
                 slotProps={{ htmlInput: { pattern: '\\d{5}', maxLength: 5, inputMode: 'numeric' } }}
               />
-              <TextField name="ort" label="Ort" required fullWidth autoComplete="off" />
+              <TextField name="ort" label="Ort" required fullWidth autoComplete="off" {...fehlerProps('ort')} />
             </Stack>
           </Stack>
         </DialogContent>

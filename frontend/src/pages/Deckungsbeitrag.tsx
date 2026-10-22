@@ -8,6 +8,8 @@ import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
+import { useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 import Typography from '@mui/material/Typography'
 import { PieChart } from '@mui/x-charts/PieChart'
 import { useState } from 'react'
@@ -79,6 +81,9 @@ function Auswertung({ mietobjekte }: { mietobjekte: Mietobjekt[] }) {
   const [monat, setMonat] = useState(0)
   const { data, loading, error } = useDeckungsbeitrag(mietobjektId, jahr, monat || undefined)
   const farbe = mietobjekte.find((m) => m.id === mietobjektId)?.farbe
+  // Below lg the chart column is narrow: the legend goes under the pie instead of squeezing it.
+  const theme = useTheme()
+  const legendeUnten = useMediaQuery(theme.breakpoints.down('lg'))
 
   return (
     <Paper variant="outlined" sx={{ p: 2, borderLeft: 4, borderLeftColor: farbe }}>
@@ -161,7 +166,12 @@ function Auswertung({ mietobjekte }: { mietobjekte: Mietobjekt[] }) {
                       valueFormatter: (v) => formatEuro(String(v.value), 2),
                     },
                   ]}
-                  height={300}
+                  height={legendeUnten ? 360 : 300}
+                  slotProps={{
+                    legend: legendeUnten
+                      ? { direction: 'horizontal', position: { vertical: 'bottom', horizontal: 'center' } }
+                      : undefined,
+                  }}
                 />
               ) : (
                 <Typography color="text.secondary">Keine Ausgaben im Zeitraum.</Typography>

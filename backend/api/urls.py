@@ -10,7 +10,7 @@ from .views.buchung import BuchungViewSet
 from .views.auswertung import AnlageVView, DeckungsbeitragView
 from .views.darlehen import DarlehenViewSet
 from .views.bodenrichtwert import BodenrichtwertViewSet
-from .views.benutzer import BenutzerView
+from .views.benutzer import AbmeldenView, AnmeldenView, BenutzerView
 
 DETAIL = {'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}
 
@@ -37,5 +37,7 @@ urlpatterns = [
     path('auswertung/deckungsbeitrag/', DeckungsbeitragView.as_view(), name='auswertung-deckungsbeitrag'),
     path('auswertung/anlage-v/', AnlageVView.as_view(), name='auswertung-anlage-v'),
     path('benutzer/', BenutzerView.as_view(), name='benutzer'),
+    path('auth/anmelden/', AnmeldenView.as_view(), name='anmelden'),
+    path('auth/abmelden/', AbmeldenView.as_view(), name='abmelden'),
     path('auth/', include('rest_framework.urls')),
 ]

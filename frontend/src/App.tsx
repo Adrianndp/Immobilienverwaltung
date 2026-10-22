@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import Layout from './components/Layout.tsx'
 import AnlageV from './pages/AnlageV.tsx'
+import Anmelden from './pages/Anmelden.tsx'
 import Deckungsbeitrag from './pages/Deckungsbeitrag.tsx'
 import Konto from './pages/Konto.tsx'
 import Kostenarten from './pages/Kostenarten.tsx'
@@ -15,6 +16,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="login" element={<Anmelden />} />
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/mietobjekte" replace />} />
           <Route path="mietobjekte" element={<Mietobjekte />} />

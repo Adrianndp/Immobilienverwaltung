@@ -1,6 +1,8 @@
 import { apiRequest, apiUpload, useApi } from './client'
 import type {
   AnlageV,
+  Anmeldedaten,
+  Anmeldestatus,
   Benutzer,
   Bodenrichtwert,
   BodenrichtwertInput,
@@ -24,6 +26,19 @@ import type {
   RechnungInput,
   Zuordnung,
 } from './types'
+
+// Also sets the CSRF cookie that useAnmelden needs.
+export function useAnmeldestatus() {
+  return useApi<Anmeldestatus>('/auth/anmelden/')
+}
+
+export function useAnmelden() {
+  return (daten: Anmeldedaten) => apiRequest<Benutzer>('POST', '/auth/anmelden/', daten)
+}
+
+export function useAbmelden() {
+  return () => apiRequest<void>('POST', '/auth/abmelden/')
+}
 
 export function useBenutzer() {
   return useApi<Benutzer>('/benutzer/')

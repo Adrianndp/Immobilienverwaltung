@@ -39,9 +39,10 @@ export function validierungsFehler(error: unknown): Record<string, string> | und
 
 async function parseResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) return undefined as T
-  // Not logged in: DRF answers 403, send the user to Django's login page.
-  if (res.status === 403) {
-    window.location.href = `/api/auth/login/?next=${window.location.pathname}`
+  // Not logged in: DRF answers 403, send the user to the login page and back afterwards.
+  if (res.status === 403 && window.location.pathname !== '/login') {
+    const next = encodeURIComponent(window.location.pathname + window.location.search)
+    window.location.href = `/login?next=${next}`
   }
   const body = await res.json().catch(() => undefined)
   if (!res.ok) {

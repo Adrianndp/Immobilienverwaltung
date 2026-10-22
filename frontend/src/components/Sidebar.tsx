@@ -6,13 +6,16 @@ import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import InsightsIcon from '@mui/icons-material/Insights'
+import LogoutIcon from '@mui/icons-material/Logout'
 import Inventory2Icon from '@mui/icons-material/Inventory2'
 import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import PeopleIcon from '@mui/icons-material/People'
 import PieChartIcon from '@mui/icons-material/PieChart'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import ScheduleIcon from '@mui/icons-material/Schedule'
+import Box from '@mui/material/Box'
 import Collapse from '@mui/material/Collapse'
+import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
 import ListItemButton from '@mui/material/ListItemButton'
@@ -21,7 +24,8 @@ import ListItemText from '@mui/material/ListItemText'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { Fragment, useState, type ReactNode } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { useAbmelden } from '../api/hooks'
 import { MIETVERTRAG_STATUS_LABELS, mietvertragStatus, type MietvertragStatus } from '../api/types'
 
 export const SIDEBAR_WIDTH = 240
@@ -93,6 +97,9 @@ interface Props {
 
 function Sidebar({ begruessung, mobilOffen, onMobilSchliessen }: Props) {
   const { pathname, search } = useLocation()
+  const navigate = useNavigate()
+  const abmelden = useAbmelden()
+  const [abmeldend, setAbmeldend] = useState(false)
   const [searchParams] = useSearchParams()
   const status = mietvertragStatus(searchParams.get('status'))
 
@@ -104,6 +111,15 @@ function Sidebar({ begruessung, mobilOffen, onMobilSchliessen }: Props) {
   if (route !== letzteRoute) {
     setLetzteRoute(route)
     if (aktiveGruppe && !offen.has(aktiveGruppe)) setOffen(new Set(offen).add(aktiveGruppe))
+  }
+
+  async function handleAbmelden() {
+    setAbmeldend(true)
+    try {
+      await abmelden()
+    } finally {
+      navigate('/login', { replace: true })
+    }
   }
 
   function umschalten(to: string) {
@@ -166,6 +182,17 @@ function Sidebar({ begruessung, mobilOffen, onMobilSchliessen }: Props) {
             </ListItemButton>
           ),
         )}
+      </List>
+      {/* Pushed to the bottom of the drawer. */}
+      <Box sx={{ flexGrow: 1 }} />
+      <Divider />
+      <List>
+        <ListItemButton onClick={handleAbmelden} disabled={abmeldend}>
+          <ListItemIcon>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText primary="Abmelden" />
+        </ListItemButton>
       </List>
     </>
   )

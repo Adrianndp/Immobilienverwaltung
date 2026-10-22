@@ -309,3 +309,12 @@ export interface Benutzer {
   first_name: string
   last_name: string
 }
+
+export interface Anmeldestatus {
+  angemeldet: boolean
+}
+
+export interface Anmeldedaten {
+  username: string
+  password: string
+}

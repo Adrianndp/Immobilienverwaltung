@@ -4,7 +4,7 @@ from decimal import Decimal as D
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase
 
 from .models import (
     Buchung,
@@ -199,3 +199,35 @@ class BodenrichtwertTests(ApiTestCase):
         self.client.post("/api/bodenrichtwerte/", daten, format="json")
 
         self.assertEqual(self.client.post("/api/bodenrichtwerte/", daten, format="json").status_code, 400)
+
+
+class AnmeldenTests(TestCase):
+    def setUp(self):
+        User.objects.create_user("eigentuemer", password="geheim-123")
+        # Like a browser: CSRF is checked, so the token comes from the GET.
+        self.client = APIClient(enforce_csrf_checks=True)
+
+    def anmelden(self, password, mit_token=True):
+        self.client.get("/api/auth/anmelden/")
+        token = self.client.cookies["csrftoken"].value if mit_token else ""
+        return self.client.post(
+            "/api/auth/anmelden/", {"username": "eigentuemer", "password": password}, format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+
+    def test_anmelden_und_abmelden(self):
+        self.assertEqual(self.anmelden("geheim-123").json()["username"], "eigentuemer")
+        self.assertTrue(self.client.get("/api/auth/anmelden/").json()["angemeldet"])
+
+        token = self.client.cookies["csrftoken"].value
+        self.assertEqual(self.client.post("/api/auth/abmelden/", HTTP_X_CSRFTOKEN=token).status_code, 204)
+        self.assertEqual(self.client.get("/api/benutzer/").status_code, 403)
+
+    def test_falsches_passwort(self):
+        antwort = self.anmelden("falsch")
+
+        self.assertEqual(antwort.status_code, 400)
+        self.assertFalse(self.client.get("/api/auth/anmelden/").json()["angemeldet"])
+
+    def test_ohne_csrf_token_abgelehnt(self):
+        self.assertEqual(self.anmelden("geheim-123", mit_token=False).status_code, 403)

@@ -50,14 +50,15 @@ MIETOBJEKTE = {
         name="WG Uni-Viertel", farbe=Mietobjekt.Farbe.LILA,
         strasse="Kreuzstraße", hausnummer="31", plz="48143", ort="Münster",
         objektart="ETW", nutzung="VERMIETUNG", vermietung="TEILE",
-        kaufdatum=date(2022, 6, 1), kaufpreis=D("210000"),
+        kaufdatum=date(2022, 6, 1), kaufpreis=D("210000"), grundschuld=D("160000"), marktwert=D("225000"),
         wohnflaeche=D("74"), stockwerk=3, baujahr=1972, weg_anteil=D("6.20"), weg_nenner=100,
         zimmer=3, baeder=1, kueche=1,
     ),
     "see": dict(
         name="Eigenheim Seeblick", farbe=Mietobjekt.Farbe.GRUEN,
         strasse="Seestraße", hausnummer="3", plz="78464", ort="Konstanz",
-        objektart="EFH", nutzung="EIGEN", kaufdatum=date(2015, 3, 20), kaufpreis=D("495000"),
+        objektart="EFH", nutzung="EIGEN",
+        kaufdatum=date(2015, 3, 20), kaufpreis=D("495000"), marktwert=D("560000"),
     ),
 }  # fmt: skip
 
@@ -83,6 +84,11 @@ DARLEHEN = [
         mietobjekt="garten", bank="Sparkasse Leipzig", iban="DE86 8605 5592 1090 2233 44",
         beginn=date(2017, 9, 15), betrag=D("550000"), art="TILGUNG", zinsbindung_bis=date(2027, 9, 15),
         sollzins=D("1.200"), tilgung=D("2.500"),
+    ),
+    dict(
+        mietobjekt="wg", bank="Sparkasse Münsterland Ost", iban="DE74 4005 0150 0034 8172 65",
+        beginn=date(2022, 6, 1), betrag=D("160000"), art="ANNUITAET", zinsbindung_bis=date(2032, 6, 1),
+        sollzins=D("3.200"), tilgung=D("2.000"),
     ),
 ]  # fmt: skip
 
@@ -208,58 +214,73 @@ LIEFERANTEN = {
     ),
 }  # fmt: skip
 
-# anteile: {Mietobjekt key: prozent}. bezahlt: (buchungstag, buchungsart, buchungstext), None = still open.
-# T-2026-10 and 2026-0915 stay open; samples/demo_umsaetze.csv has their payments for live assignment.
-RECHNUNGEN = [
-    dict(lieferant="Telekom Deutschland GmbH", kostenart="Telefon/Internet", datum=date(2026, 8, 1),
-         name="MagentaZuhause August", rechnungsnummer="T-2026-08", betrag=D("29.99"), anteile={"wg": 100},
-         bezahlt=(date(2026, 8, 17), "Lastschrift", "Kundennr. 4711081512 MagentaZuhause M")),
-    dict(lieferant="Telekom Deutschland GmbH", kostenart="Telefon/Internet", datum=date(2026, 9, 1),
-         name="MagentaZuhause September", rechnungsnummer="T-2026-09", betrag=D("29.99"), anteile={"wg": 100},
-         bezahlt=(date(2026, 9, 15), "Lastschrift", "Kundennr. 4711081512 MagentaZuhause M")),
-    dict(lieferant="Telekom Deutschland GmbH", kostenart="Telefon/Internet", datum=date(2026, 10, 1),
-         name="MagentaZuhause Oktober", rechnungsnummer="T-2026-10", betrag=D("29.99"), anteile={"wg": 100},
-         bezahlt=None),
-    dict(lieferant="Stadtwerke Karlsruhe", kostenart="Allgemeinstrom", datum=date(2026, 8, 20),
-         name="Abschlag Allgemeinstrom August", rechnungsnummer="SW-300112233-08", betrag=D("85"),
-         anteile={"garten": 100},
-         bezahlt=(date(2026, 8, 28), "Lastschrift", "Abschlag Strom Vertragskonto 300112233")),
-    dict(lieferant="Stadtwerke Karlsruhe", kostenart="Allgemeinstrom", datum=date(2026, 9, 20),
-         name="Abschlag Allgemeinstrom September", rechnungsnummer="SW-300112233-09", betrag=D("85"),
-         anteile={"garten": 100},
-         bezahlt=(date(2026, 9, 29), "Lastschrift", "Abschlag Strom Vertragskonto 300112233")),
-    dict(lieferant="Sanitär Huber GmbH", kostenart="Reparaturen", datum=date(2026, 9, 15),
-         name="Reparatur Heizung", rechnungsnummer="2026-0915", betrag=D("412.50"), anteile={"garten": 100},
-         bezahlt=None),
-    dict(lieferant="Klaus Neumann", kostenart="Malerarbeiten", datum=date(2026, 6, 20),
-         name="Treppenhaus streichen", rechnungsnummer="N-117", betrag=D("1250"), anteile={"linden": 100},
-         bezahlt=(date(2026, 6, 29), "Überweisung", "Rechnung N-117 Treppenhaus streichen")),
-    dict(lieferant="Hausverwaltung Meier & Partner", kostenart="Verwaltungskosten", datum=date(2026, 7, 1),
-         name="Verwaltung Q3/2026", rechnungsnummer="HV-2026-07", betrag=D("357"), anteile={"garten": 60, "linden": 40},
-         bezahlt=(date(2026, 7, 10), "Überweisung", "Rechnung HV-2026-07 Verwaltung Q3/2026")),
-    dict(lieferant="Küchenstudio Brandt", kostenart="Einbauküche", datum=date(2024, 3, 10),
-         name="Einbauküche WG", rechnungsnummer="KS-4471", betrag=D("6800"), anteile={"wg": 100},
-         bezahlt=(date(2024, 3, 25), "Überweisung", "Rechnung KS-4471 Einbauküche Kreuzstraße 31")),
-    dict(lieferant="Hanse Versicherung AG", kostenart="Gebäudeversicherung", datum=date(2025, 1, 15),
-         name="Gebäudeversicherung 2025", rechnungsnummer="HV-88213-25", betrag=D("460"),
-         anteile={"garten": 70, "linden": 30},
-         bezahlt=(date(2025, 1, 31), "Lastschrift", "Vers.-Nr. 88213 Gebäudeversicherung 2025")),
-    dict(lieferant="Hanse Versicherung AG", kostenart="Gebäudeversicherung", datum=date(2026, 1, 15),
-         name="Gebäudeversicherung 2026", rechnungsnummer="HV-88213-26", betrag=D("480"),
-         anteile={"garten": 70, "linden": 30},
-         bezahlt=(date(2026, 1, 30), "Lastschrift", "Vers.-Nr. 88213 Gebäudeversicherung 2026")),
-]  # fmt: skip
-
-
 def plus_monate(tag, n):
     jahr, monat = divmod(tag.month - 1 + n, 12)
     return date(tag.year + jahr, monat + 1, 1)
 
 
+def rechnungen(start):
+    """The Rechnungen of the 12 months from start (the 1st of a month), dated and paid within them.
+
+    anteile: {Mietobjekt key: prozent}. bezahlt: (buchungstag, buchungsart, buchungstext), None = still open.
+    The two open ones are in the last month; samples/demo_umsaetze.csv has their payments for live assignment.
+    """
+    liste = []
+    for n in range(12):
+        erster = plus_monate(start, n)
+        monat = f"{MONATE[erster.month - 1]} {erster.year}"
+        letzter = n == 11
+        liste.append(
+            dict(lieferant="Telekom Deutschland GmbH", kostenart="Telefon/Internet", datum=erster,
+                 name=f"MagentaZuhause {monat}", rechnungsnummer=f"T-{erster:%Y-%m}", betrag=D("29.99"),
+                 anteile={"wg": 100},
+                 bezahlt=None if letzter else (
+                     erster.replace(day=15), "Lastschrift", "Kundennr. 4711081512 MagentaZuhause M"))
+        )  # fmt: skip
+        liste.append(
+            dict(lieferant="Stadtwerke Karlsruhe", kostenart="Allgemeinstrom", datum=erster.replace(day=20),
+                 name=f"Abschlag Allgemeinstrom {monat}", rechnungsnummer=f"SW-300112233-{erster:%Y-%m}",
+                 betrag=D("85"), anteile={"garten": 100},
+                 bezahlt=(erster.replace(day=28), "Lastschrift", "Abschlag Strom Vertragskonto 300112233"))
+        )  # fmt: skip
+        if erster.month in (1, 4, 7, 10):
+            quartal = f"Q{(erster.month + 2) // 3}/{erster.year}"
+            liste.append(
+                dict(lieferant="Hausverwaltung Meier & Partner", kostenart="Verwaltungskosten", datum=erster,
+                     name=f"Verwaltung {quartal}", rechnungsnummer=f"HV-{erster:%Y-%m}", betrag=D("357"),
+                     anteile={"garten": 60, "linden": 40},
+                     bezahlt=(erster.replace(day=10), "Überweisung",
+                              f"Rechnung HV-{erster:%Y-%m} Verwaltung {quartal}"))
+            )  # fmt: skip
+        if erster.month == 1:
+            liste.append(
+                dict(lieferant="Hanse Versicherung AG", kostenart="Gebäudeversicherung", datum=erster.replace(day=15),
+                     name=f"Gebäudeversicherung {erster.year}", rechnungsnummer=f"HV-88213-{erster:%y}",
+                     betrag=D("480"), anteile={"garten": 70, "linden": 30},
+                     bezahlt=(erster.replace(day=30), "Lastschrift",
+                              f"Vers.-Nr. 88213 Gebäudeversicherung {erster.year}"))
+            )  # fmt: skip
+
+    kueche, maler, heizung = plus_monate(start, 1), plus_monate(start, 8), plus_monate(start, 11)
+    liste += [
+        dict(lieferant="Küchenstudio Brandt", kostenart="Einbauküche", datum=kueche.replace(day=10),
+             name="Einbauküche WG", rechnungsnummer="KS-4471", betrag=D("6800"), anteile={"wg": 100},
+             bezahlt=(kueche.replace(day=25), "Überweisung", "Rechnung KS-4471 Einbauküche Kreuzstraße 31")),
+        dict(lieferant="Klaus Neumann", kostenart="Malerarbeiten", datum=maler.replace(day=20),
+             name="Treppenhaus streichen", rechnungsnummer="N-117", betrag=D("1250"), anteile={"linden": 100},
+             bezahlt=(maler.replace(day=28), "Überweisung", "Rechnung N-117 Treppenhaus streichen")),
+        # Rechnungsnummer is the date, e.g. "2026-0915", as in samples/demo_umsaetze.csv.
+        dict(lieferant="Sanitär Huber GmbH", kostenart="Reparaturen", datum=heizung.replace(day=15),
+             name="Reparatur Heizung", rechnungsnummer=f"{heizung:%Y-%m}15", betrag=D("412.50"),
+             anteile={"garten": 100}, bezahlt=None),
+    ]  # fmt: skip
+    return liste
+
+
 class Command(BaseCommand):
     help = (
         "Ersetzt alle Daten des Benutzers (Mietobjekte, Mieter, Rechnungen, Buchungen, ...) durch Demodaten. "
-        "Mietzahlungen werden für die letzten 4 vollen Monate erzeugt."
+        "Mieten, Rechnungen und Darlehensraten werden für die letzten 12 vollen Monate erzeugt."
     )
 
     def add_arguments(self, parser):
@@ -304,8 +325,9 @@ class Command(BaseCommand):
         for key, werte in BODENRICHTWERTE.items():
             for jahr, wert in werte:
                 Bodenrichtwert.objects.create(mietobjekt=mietobjekte[key], datum=date(jahr, 1, 1), wert=D(wert))
-        for daten in DARLEHEN:
-            Darlehen.objects.create(**{**daten, "mietobjekt": mietobjekte[daten["mietobjekt"]]})
+        darlehen = [
+            Darlehen.objects.create(**{**daten, "mietobjekt": mietobjekte[daten["mietobjekt"]]}) for daten in DARLEHEN
+        ]
 
         vertraege = [
             Mietvertrag.objects.create(
@@ -317,7 +339,12 @@ class Command(BaseCommand):
 
         kostenarten = {k["name"]: Kostenart.objects.create(eigentuemer=user, **k) for k in KOSTENARTEN}
         lieferanten = {name: Lieferant.objects.create(eigentuemer=user, **daten) for name, daten in LIEFERANTEN.items()}
-        for daten in RECHNUNGEN:
+
+        # The 12 full months before the current one; the current month is left for samples/demo_umsaetze.csv.
+        dieser_monat = timezone.localdate().replace(day=1)
+        start, ende = plus_monate(dieser_monat, -12), dieser_monat - timedelta(days=1)
+
+        for daten in rechnungen(start):
             rechnung = Rechnung.objects.create(
                 lieferant=lieferanten[daten["lieferant"]],
                 kostenart=kostenarten[daten["kostenart"]],
@@ -329,10 +356,9 @@ class Command(BaseCommand):
                 tag, art, text = daten["bezahlt"]
                 self.buchen(user, tag, daten["lieferant"], text, art, -rechnung.betrag, rechnung=rechnung)
 
-        # Rent for the last 4 full months, from every contract that ran in that month.
-        dieser_monat = timezone.localdate().replace(day=1)
-        for n in range(-4, 0):
-            erster = plus_monate(dieser_monat, n)
+        # Rent for every month, from every contract that ran in that month.
+        for n in range(12):
+            erster = plus_monate(start, n)
             letzter = date(erster.year, erster.month, calendar.monthrange(erster.year, erster.month)[1])
             for i, v in enumerate(vertraege):
                 if v.beginn > letzter or (v.ende is not None and v.ende < erster):
@@ -346,6 +372,14 @@ class Command(BaseCommand):
                 self.buchen(
                     user, tag, v.mieter.kontoinhaber, text, "Überweisung", v.kaltmiete + v.nebenkosten, mietvertrag=v
                 )
+
+        # Darlehen rates on the dates of the Tilgungsplan, for the amount it plans.
+        for d in darlehen:
+            for monat in d.tilgungsplan():
+                if start <= monat["datum"] <= ende:
+                    text = f"Rate {MONATE[monat['datum'].month - 1]} {monat['datum'].year} Darlehen {d.iban[-12:]}"
+                    rate = monat["zins"] + monat["tilgung"]
+                    self.buchen(user, monat["datum"], d.bank, text, "Lastschrift", -rate, darlehen=d)
 
     def buchen(self, user, tag, kontoinhaber, text, art, betrag, **ziel):
         buchung = Buchung.objects.create(

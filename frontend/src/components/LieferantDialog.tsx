@@ -58,6 +58,8 @@ function LieferantDialog({ lieferant, onClose, onSaved }: Props) {
       error: !!fehler[name],
       helperText: fehler[name],
       fullWidth: true,
+      // The supplier's data, not the user's: no browser suggestions from the user's own profile.
+      autoComplete: 'off',
     }
   }
 

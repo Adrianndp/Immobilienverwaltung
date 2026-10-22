@@ -17,7 +17,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
 import { useCreateRechnung, useKostenarten, useLieferanten, useMietobjekte } from '../api/hooks'
-import { lieferantName } from '../format'
+import { dezimal, lieferantName } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 type Feld = 'datum' | 'name' | 'rechnungsnummer' | 'betrag'
@@ -52,7 +52,7 @@ function RechnungDialog({ onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false)
 
   // Summed in hundredths so that e.g. 33.33 + 33.33 + 33.34 is exactly 100.
-  const summeHundertstel = anteile.reduce((s, a) => s + Math.round((Number(a.prozent) || 0) * 100), 0)
+  const summeHundertstel = anteile.reduce((s, a) => s + Math.round((Number(dezimal(a.prozent)) || 0) * 100), 0)
   const summe = summeHundertstel / 100
 
   function feld(name: Feld) {
@@ -78,9 +78,10 @@ function RechnungDialog({ onClose, onSaved }: Props) {
     try {
       await createRechnung({
         ...werte,
+        betrag: dezimal(werte.betrag),
         kostenart: Number(kostenart),
         lieferant: Number(lieferant),
-        anteile: anteile.map((a) => ({ mietobjekt: Number(a.mietobjekt), prozent: a.prozent })),
+        anteile: anteile.map((a) => ({ mietobjekt: Number(a.mietobjekt), prozent: dezimal(a.prozent) })),
       })
       onSaved()
       onClose()
@@ -126,10 +127,9 @@ function RechnungDialog({ onClose, onSaved }: Props) {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Betrag (€)"
-                  type="number"
                   required
                   {...feld('betrag')}
-                  slotProps={{ htmlInput: { step: '0.01' } }}
+                  slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -210,13 +210,12 @@ function RechnungDialog({ onClose, onSaved }: Props) {
                     </TextField>
                     <TextField
                       label="Prozent"
-                      type="number"
                       required
                       value={a.prozent}
                       onChange={(e) => setAnteil(i, { prozent: e.target.value })}
                       error={!!fehler[`anteile.${i}.prozent`]}
                       helperText={fehler[`anteile.${i}.prozent`]}
-                      slotProps={{ htmlInput: { step: '0.01', min: 0.01, max: 100 } }}
+                      slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                       sx={{ width: 140, flexShrink: 0 }}
                     />
                     <IconButton

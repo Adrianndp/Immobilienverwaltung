@@ -13,6 +13,7 @@ import { validierungsFehler } from '../api/client'
 import { useCreateKostenart } from '../api/hooks'
 import { KATEGORIE_LABELS, type Kategorie } from '../api/types'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
+import { dezimal } from '../format'
 
 interface Props {
   onClose: () => void
@@ -38,7 +39,7 @@ function KostenartDialog({ onClose, onSaved }: Props) {
       await createKostenart({
         name,
         kategorie,
-        abschreibung_prozent: kategorie === 'ABSCHREIBUNG' ? prozent || null : null,
+        abschreibung_prozent: kategorie === 'ABSCHREIBUNG' ? dezimal(prozent) || null : null,
       })
       onSaved()
       onClose()
@@ -90,13 +91,12 @@ function KostenartDialog({ onClose, onSaved }: Props) {
             {kategorie === 'ABSCHREIBUNG' && (
               <TextField
                 label="Abschreibung %"
-                type="number"
                 required
                 value={prozent}
                 onChange={(e) => setProzent(e.target.value)}
                 error={!!fehler.abschreibung_prozent}
                 helperText={fehler.abschreibung_prozent}
-                slotProps={{ htmlInput: { step: '0.01', min: 0.01, max: 100 } }}
+                slotProps={{ htmlInput: { inputMode: 'decimal' } }}
               />
             )}
           </Stack>

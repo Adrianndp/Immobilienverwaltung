@@ -20,7 +20,7 @@ import { validierungsFehler } from '../api/client'
 import { useDarlehen, useMietvertraege, useRechnungen, useZuordnenBuchung } from '../api/hooks'
 import type { Buchung, Zuordnung } from '../api/types'
 import { Zeile } from './InfoKarte'
-import { formatDatum, formatEuro } from '../format'
+import { dezimal, formatDatum, formatEuro } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 type ZielFeld = 'mietvertrag' | 'rechnung' | 'darlehen'
@@ -44,7 +44,7 @@ interface Props {
 
 // Amounts as whole cents so that sums are exact.
 function cent(betrag: string) {
-  return Math.round((Number(betrag) || 0) * 100)
+  return Math.round((Number(dezimal(betrag)) || 0) * 100)
 }
 
 function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
@@ -105,7 +105,7 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
         zeilen.map((z) => {
           const [feld, id] = z.ziel.split(':')
           return {
-            betrag: z.betrag,
+            betrag: dezimal(z.betrag),
             mietvertrag: feld === 'mietvertrag' ? Number(id) : null,
             rechnung: feld === 'rechnung' ? Number(id) : null,
             darlehen: feld === 'darlehen' ? Number(id) : null,
@@ -173,13 +173,12 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
                     </TextField>
                     <TextField
                       label="Betrag (€)"
-                      type="number"
                       required
                       value={z.betrag}
                       onChange={(e) => setZeile(i, { betrag: e.target.value })}
                       error={!!fehler[`zuordnungen.${i}.betrag`]}
                       helperText={fehler[`zuordnungen.${i}.betrag`]}
-                      slotProps={{ htmlInput: { step: '0.01', min: 0.01 } }}
+                      slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                       sx={{ width: 160, flexShrink: 0 }}
                     />
                     <IconButton

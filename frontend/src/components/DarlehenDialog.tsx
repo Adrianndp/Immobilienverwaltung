@@ -22,7 +22,7 @@ import { validierungsFehler } from '../api/client'
 import { useCreateDarlehen, useDarlehen, useUpdateDarlehen } from '../api/hooks'
 import { DARLEHEN_ART_LABELS, type Darlehen, type Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
-import { formatEuro, LEER } from '../format'
+import { dezimal, formatEuro, LEER } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 type Feld = 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
@@ -80,6 +80,9 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
     setAllgemeinerFehler(undefined)
     const daten = {
       ...werte,
+      betrag: dezimal(werte.betrag),
+      sollzins: dezimal(werte.sollzins),
+      tilgung: dezimal(werte.tilgung),
       art: werte.art as Darlehen['art'],
       zinsbindung_bis: werte.zinsbindung_bis || null,
       mietobjekt: mietobjekt.id,
@@ -128,10 +131,9 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
               <Stack spacing={2}>
                 <TextField
                   label="Darlehensbetrag (€)"
-                  type="number"
                   required
                   {...feld('betrag')}
-                  slotProps={{ htmlInput: { step: '0.01' } }}
+                  slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                 />
                 <TextField select label="Art des Darlehens" required {...feld('art')}>
                   {Object.entries(DARLEHEN_ART_LABELS).map(([value, label]) => (
@@ -158,17 +160,15 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
                 </div>
                 <TextField
                   label="Sollzinssatz (%)"
-                  type="number"
                   required
                   {...feld('sollzins')}
-                  slotProps={{ htmlInput: { step: '0.001' } }}
+                  slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                 />
                 <TextField
                   label="Tilgung (%)"
-                  type="number"
                   required
                   {...feld('tilgung')}
-                  slotProps={{ htmlInput: { step: '0.001' } }}
+                  slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                 />
                 <TextField
                   label="Rate"

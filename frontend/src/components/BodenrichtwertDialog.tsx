@@ -22,7 +22,7 @@ import { validierungsFehler } from '../api/client'
 import { useBodenrichtwerte, useCreateBodenrichtwert, useDeleteBodenrichtwert } from '../api/hooks'
 import type { Bodenrichtwert, Mietobjekt } from '../api/types'
 import TabellenContainer, { DatumZelle } from './Tabelle'
-import { formatEuro, LEER } from '../format'
+import { dezimal, formatEuro, LEER } from '../format'
 import { useVollbild } from './dialog'
 
 // "270.00" -> "270,00 €/m²"
@@ -142,7 +142,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
     setFehler({})
     setAllgemeinerFehler(undefined)
     try {
-      await createBodenrichtwert({ mietobjekt: mietobjekt.id, datum, wert })
+      await createBodenrichtwert({ mietobjekt: mietobjekt.id, datum, wert: dezimal(wert) })
       setDatum('')
       setWert('')
       geaendert()
@@ -204,13 +204,12 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
                 />
                 <TextField
                   label="Bodenrichtwert (€/m²)"
-                  type="number"
                   required
                   value={wert}
                   onChange={(e) => setWert(e.target.value)}
                   error={!!fehler.wert}
                   helperText={fehler.wert}
-                  slotProps={{ htmlInput: { step: '0.01', min: '0.01' } }}
+                  slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                 />
                 <Button type="submit" variant="outlined" startIcon={<AddIcon />} loading={saving} sx={{ mt: 1 }}>
                   Hinzufügen

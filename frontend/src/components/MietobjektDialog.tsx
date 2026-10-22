@@ -61,7 +61,7 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
-            <TextField name="name" label="Name" helperText="z. B. Wohnung 1" required />
+            <TextField name="name" label="Name" helperText="z. B. Wohnung 1" required autoComplete="off" />
             <TextField select name="objektart" label="Objektart" defaultValue="ETW" required>
               {Object.entries(OBJEKTART_LABELS).map(([value, label]) => (
                 <MenuItem key={value} value={value}>
@@ -103,17 +103,18 @@ function MietobjektDialog({ open, onClose, onCreated }: Props) {
               )}
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField name="strasse" label="Straße" required fullWidth />
-              <TextField name="hausnummer" label="Hausnummer" required />
+              <TextField name="strasse" label="Straße" required fullWidth autoComplete="off" />
+              <TextField name="hausnummer" label="Hausnummer" required autoComplete="off" />
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 name="plz"
                 label="PLZ"
                 required
-                slotProps={{ htmlInput: { pattern: '\\d{5}', maxLength: 5 } }}
+                autoComplete="off"
+                slotProps={{ htmlInput: { pattern: '\\d{5}', maxLength: 5, inputMode: 'numeric' } }}
               />
-              <TextField name="ort" label="Ort" required fullWidth />
+              <TextField name="ort" label="Ort" required fullWidth autoComplete="off" />
             </Stack>
           </Stack>
         </DialogContent>

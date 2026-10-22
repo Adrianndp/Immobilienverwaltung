@@ -37,7 +37,7 @@ import {
 import BodenrichtwertDialog from '../components/BodenrichtwertDialog'
 import DarlehenDialog from '../components/DarlehenDialog'
 import FarbAuswahl from '../components/FarbAuswahl'
-import { formatEuro, laenderName } from '../format'
+import { dezimal, formatEuro, laenderName } from '../format'
 
 type Feld = Exclude<keyof Mietobjekt, 'id'>
 type Fehler = Partial<Record<string, string[]>>
@@ -164,7 +164,7 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
   }
 
   function feld(name: Feld) {
-    const zahl = DEZIMAL.includes(name) || ANZAHL.includes(name) || GANZZAHL_OPTIONAL.includes(name)
+    const ganzzahl = ANZAHL.includes(name) || GANZZAHL_OPTIONAL.includes(name)
     return {
       name,
       value: werte[name] ?? '',
@@ -172,8 +172,10 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
       error: !!fehler[name],
       helperText: fehler[name]?.join(' '),
       fullWidth: true,
-      ...(zahl && { type: 'number' }),
-      ...(DEZIMAL.includes(name) && { slotProps: { htmlInput: { step: '0.01' } } }),
+      autoComplete: 'off',
+      ...(ganzzahl && { type: 'number' }),
+      // Text with a decimal keyboard, so "1234,56" can be typed; dezimal() converts it on save.
+      ...(DEZIMAL.includes(name) && { slotProps: { htmlInput: { inputMode: 'decimal' } } }),
       ...(ANZAHL.includes(name) && { slotProps: { htmlInput: { min: 0 } } }),
     }
   }
@@ -188,7 +190,12 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
     setFehler({})
     setAllgemeinerFehler(undefined)
     try {
-      const daten = Object.fromEntries(geaendert.map((k) => [k, werte[k]]))
+      const daten = Object.fromEntries(
+        geaendert.map((k) => {
+          const wert = werte[k]
+          return [k, DEZIMAL.includes(k as Feld) && typeof wert === 'string' ? dezimal(wert) : wert]
+        }),
+      )
       const neu = await updateMietobjekt(mietobjekt.id, daten)
       setGespeichert(neu)
       setWerte(neu)

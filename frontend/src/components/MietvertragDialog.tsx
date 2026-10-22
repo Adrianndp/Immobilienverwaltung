@@ -19,7 +19,7 @@ import {
   useUpdateMietvertrag,
 } from '../api/hooks'
 import type { Mieter, Mietvertrag, MietvertragInput } from '../api/types'
-import { laenderName } from '../format'
+import { dezimal, laenderName } from '../format'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 
 type MieterFeld = Exclude<keyof Mieter, 'id'>
@@ -72,10 +72,10 @@ function zuDaten(f: Formular): MietvertragInput {
     einheit: Number(f.einheit),
     beginn: f.beginn,
     ende: f.ende || null,
-    kaltmiete: f.kaltmiete,
-    nebenkosten: f.nebenkosten,
+    kaltmiete: dezimal(f.kaltmiete),
+    nebenkosten: dezimal(f.nebenkosten),
     // Optional in the form; the model defaults to 0.
-    kaution: f.kaution || '0',
+    kaution: dezimal(f.kaution) || '0',
   }
 }
 
@@ -129,6 +129,8 @@ function MietvertragDialog({ mietvertrag, onClose, onSaved }: Props) {
       value: werte.mieter[name],
       onChange: (e: ChangeEvent<HTMLInputElement>) =>
         setWerte((w) => ({ ...w, mieter: { ...w.mieter, [name]: e.target.value } })),
+      // The tenant's data, not the user's: no browser suggestions from the user's own profile.
+      autoComplete: 'off',
       ...fehlerProps(`mieter.${name}`),
     }
   }
@@ -144,7 +146,7 @@ function MietvertragDialog({ mietvertrag, onClose, onSaved }: Props) {
   }
 
   const datum = { type: 'date', slotProps: { inputLabel: { shrink: true } } }
-  const betrag = { type: 'number', slotProps: { htmlInput: { step: '0.01', min: 0 } } }
+  const betrag = { slotProps: { htmlInput: { inputMode: 'decimal' } } } as const
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

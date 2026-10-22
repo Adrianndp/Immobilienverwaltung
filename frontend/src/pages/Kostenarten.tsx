@@ -1,12 +1,10 @@
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
-import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
@@ -14,6 +12,7 @@ import AddIcon from '@mui/icons-material/Add'
 import { useState } from 'react'
 import { useKostenarten } from '../api/hooks'
 import KostenartDialog from '../components/KostenartDialog'
+import TabellenContainer from '../components/Tabelle'
 import { formatProzent, LEER } from '../format'
 
 function Kostenarten() {
@@ -37,7 +36,7 @@ function Kostenarten() {
       )}
 
       {!!kostenarten?.length && (
-        <TableContainer component={Paper} variant="outlined">
+        <TabellenContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -58,7 +57,7 @@ function Kostenarten() {
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </TabellenContainer>
       )}
     </Stack>
   )

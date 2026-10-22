@@ -2,12 +2,10 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
-import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
@@ -18,6 +16,7 @@ import { useNavigate } from 'react-router'
 import { useLieferanten } from '../api/hooks'
 import type { Lieferant } from '../api/types'
 import LieferantDialog from '../components/LieferantDialog'
+import TabellenContainer from '../components/Tabelle'
 import { oderLeer } from '../format'
 
 function Lieferanten() {
@@ -45,7 +44,7 @@ function Lieferanten() {
       )}
 
       {!!lieferanten?.length && (
-        <TableContainer component={Paper} variant="outlined">
+        <TabellenContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -97,7 +96,7 @@ function Lieferanten() {
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </TabellenContainer>
       )}
     </Stack>
   )

@@ -7,7 +7,6 @@ import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
@@ -17,6 +16,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { useDeckungsbeitrag, useMietobjekte } from '../api/hooks'
 import type { Mietobjekt } from '../api/types'
+import TabellenContainer from '../components/Tabelle'
 import { formatEuro } from '../format'
 
 const MONATE = [
@@ -45,7 +45,7 @@ interface BetragTabelleProps {
 
 function BetragTabelle({ spalte, zeilen, summe }: BetragTabelleProps) {
   return (
-    <TableContainer component={Paper} variant="outlined">
+    <TabellenContainer>
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -68,7 +68,7 @@ function BetragTabelle({ spalte, zeilen, summe }: BetragTabelleProps) {
           </TableRow>
         </TableBody>
       </Table>
-    </TableContainer>
+    </TabellenContainer>
   )
 }
 

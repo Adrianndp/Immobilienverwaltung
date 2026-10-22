@@ -7,7 +7,6 @@ import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
@@ -20,6 +19,7 @@ import type { Rechnung } from '../api/types'
 import { Zeile } from '../components/InfoKarte'
 import LieferantDialog from '../components/LieferantDialog'
 import RechnungenTabelle from '../components/RechnungenTabelle'
+import TabellenContainer from '../components/Tabelle'
 import { formatEuro, laenderName, lieferantName, oderLeer } from '../format'
 
 // [Jahr, Summe in Cent], newest year first. Cents avoid floating point drift when adding amounts.
@@ -78,7 +78,7 @@ function LieferantDetail() {
       {rechnungen?.length === 0 && <Typography color="text.secondary">Noch keine Rechnungen.</Typography>}
       {!!rechnungen?.length && (
         <>
-          <TableContainer component={Paper} variant="outlined" sx={{ maxWidth: 400 }}>
+          <TabellenContainer sx={{ maxWidth: 400 }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -95,7 +95,7 @@ function LieferantDetail() {
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
+          </TabellenContainer>
 
           <Typography variant="h6">Rechnungen</Typography>
           <RechnungenTabelle rechnungen={rechnungen} />

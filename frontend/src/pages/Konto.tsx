@@ -2,13 +2,11 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
-import Paper from '@mui/material/Paper'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
@@ -19,7 +17,8 @@ import { validierungsFehler } from '../api/client'
 import { useBuchungen, useImportBuchungen } from '../api/hooks'
 import type { Buchung } from '../api/types'
 import BuchungZuordnenDialog from '../components/BuchungZuordnenDialog'
-import { formatDatum, formatEuro, oderLeer } from '../format'
+import TabellenContainer, { DatumZelle } from '../components/Tabelle'
+import { formatEuro, oderLeer } from '../format'
 
 function Konto() {
   const { data: buchungen, loading, error, reload } = useBuchungen()
@@ -91,7 +90,7 @@ function Konto() {
       )}
 
       {!!buchungen?.length && (
-        <TableContainer component={Paper} variant="outlined">
+        <TabellenContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -111,10 +110,10 @@ function Konto() {
                 const betrag = Number(b.betrag)
                 return (
                   <TableRow key={b.id}>
-                    <TableCell>{formatDatum(b.buchungstag)}</TableCell>
+                    <DatumZelle wert={b.buchungstag} />
                     <TableCell>{b.kontoinhaber}</TableCell>
                     <TableCell>{b.buchungstext}</TableCell>
-                    <TableCell>{formatDatum(b.wertstellung)}</TableCell>
+                    <DatumZelle wert={b.wertstellung} />
                     <TableCell>{b.buchungsart}</TableCell>
                     <TableCell
                       align="right"
@@ -137,7 +136,7 @@ function Konto() {
               })}
             </TableBody>
           </Table>
-        </TableContainer>
+        </TabellenContainer>
       )}
     </Stack>
   )

@@ -6,7 +6,6 @@ import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
@@ -15,6 +14,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { useAnlageV, useMietobjekte } from '../api/hooks'
 import type { Mietobjekt } from '../api/types'
+import TabellenContainer from '../components/Tabelle'
 import { formatEuro } from '../format'
 
 const AKTUELLES_JAHR = new Date().getFullYear()
@@ -67,7 +67,7 @@ function Auswertung({ mietobjekte }: { mietobjekte: Mietobjekt[] }) {
           <>
             <Stack spacing={1}>
               <Typography variant="h6">I. Einnahmen</Typography>
-              <TableContainer component={Paper} variant="outlined">
+              <TabellenContainer>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -103,12 +103,12 @@ function Auswertung({ mietobjekte }: { mietobjekte: Mietobjekt[] }) {
                     </TableRow>
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </TabellenContainer>
             </Stack>
 
             <Stack spacing={1}>
               <Typography variant="h6">II. Werbungskosten</Typography>
-              <TableContainer component={Paper} variant="outlined" sx={{ maxWidth: 700 }}>
+              <TabellenContainer sx={{ maxWidth: 700 }}>
                 <Table size="small">
                   <TableBody>
                     <TableRow>
@@ -135,7 +135,7 @@ function Auswertung({ mietobjekte }: { mietobjekte: Mietobjekt[] }) {
                     </TableRow>
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </TabellenContainer>
             </Stack>
 
             <Stack spacing={1}>

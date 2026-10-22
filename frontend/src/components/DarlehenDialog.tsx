@@ -7,12 +7,10 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
-import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
@@ -22,7 +20,8 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
 import { useCreateDarlehen, useDarlehen, useUpdateDarlehen } from '../api/hooks'
 import { DARLEHEN_ART_LABELS, type Darlehen, type Mietobjekt } from '../api/types'
-import { formatDatum, formatEuro, LEER } from '../format'
+import TabellenContainer, { DatumZelle } from './Tabelle'
+import { formatEuro, LEER } from '../format'
 
 type Feld = 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
 
@@ -206,7 +205,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
             {!darlehen?.zahlungen.length ? (
               <Typography color="text.secondary">Noch keine Zahlungen zugeordnet.</Typography>
             ) : (
-              <TableContainer component={Paper} variant="outlined">
+              <TabellenContainer>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -220,7 +219,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
                   <TableBody>
                     {darlehen.zahlungen.map((z, i) => (
                       <TableRow key={i}>
-                        <TableCell>{formatDatum(z.datum)}</TableCell>
+                        <DatumZelle wert={z.datum} />
                         <TableCell align="right">{formatEuro(z.betrag, 2)}</TableCell>
                         <TableCell>{z.betreff}</TableCell>
                         <TableCell>{z.bank}</TableCell>
@@ -229,7 +228,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
                     ))}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </TabellenContainer>
             )}
           </Stack>
         </Stack>

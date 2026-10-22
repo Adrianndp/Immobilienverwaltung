@@ -8,12 +8,10 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
-import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
@@ -23,7 +21,8 @@ import { useState, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
 import { useBodenrichtwerte, useCreateBodenrichtwert, useDeleteBodenrichtwert } from '../api/hooks'
 import type { Bodenrichtwert, Mietobjekt } from '../api/types'
-import { formatDatum, formatEuro, LEER } from '../format'
+import TabellenContainer, { DatumZelle } from './Tabelle'
+import { formatEuro, LEER } from '../format'
 
 // "270.00" -> "270,00 €/m²"
 function proQuadratmeter(wert: string) {
@@ -220,7 +219,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
             {data.length === 0 ? (
               <Typography color="text.secondary">Noch keine Bodenrichtwerte erfasst.</Typography>
             ) : (
-              <TableContainer component={Paper} variant="outlined">
+              <TabellenContainer>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -233,7 +232,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
                   <TableBody>
                     {data.map((b) => (
                       <TableRow key={b.id}>
-                        <TableCell>{formatDatum(b.datum)}</TableCell>
+                        <DatumZelle wert={b.datum} />
                         <TableCell align="right">{proQuadratmeter(b.wert)}</TableCell>
                         <TableCell align="right">{formatEuro(b.grundstueckswert, 2)}</TableCell>
                         <TableCell align="right">
@@ -245,7 +244,7 @@ function BodenrichtwertDialog({ mietobjekt, onClose, onSaved }: Props) {
                     ))}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </TabellenContainer>
             )}
           </Stack>
         )}

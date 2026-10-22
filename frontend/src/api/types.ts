@@ -302,3 +302,10 @@ export interface Bodenrichtwert {
 }
 
 export type BodenrichtwertInput = Pick<Bodenrichtwert, 'mietobjekt' | 'datum' | 'wert'>
+
+// The logged-in Django user.
+export interface Benutzer {
+  username: string
+  first_name: string
+  last_name: string
+}

@@ -85,12 +85,13 @@ function istAktiv(to: string, pathname: string, status: MietvertragStatus) {
 }
 
 interface Props {
+  begruessung: string
   // Below md the sidebar is a temporary drawer, opened from the top bar.
   mobilOffen: boolean
   onMobilSchliessen: () => void
 }
 
-function Sidebar({ mobilOffen, onMobilSchliessen }: Props) {
+function Sidebar({ begruessung, mobilOffen, onMobilSchliessen }: Props) {
   const { pathname, search } = useLocation()
   const [searchParams] = useSearchParams()
   const status = mietvertragStatus(searchParams.get('status'))
@@ -117,7 +118,7 @@ function Sidebar({ mobilOffen, onMobilSchliessen }: Props) {
     <>
       <Toolbar>
         <Typography variant="h6" noWrap>
-          Hallo, Adrian!
+          {begruessung}
         </Typography>
       </Toolbar>
       <List>

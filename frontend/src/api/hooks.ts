@@ -1,6 +1,7 @@
 import { apiRequest, apiUpload, useApi } from './client'
 import type {
   AnlageV,
+  Benutzer,
   Bodenrichtwert,
   BodenrichtwertInput,
   Buchung,
@@ -23,6 +24,10 @@ import type {
   RechnungInput,
   Zuordnung,
 } from './types'
+
+export function useBenutzer() {
+  return useApi<Benutzer>('/benutzer/')
+}
 
 export function useMietobjekte() {
   return useApi<Mietobjekt[]>('/mietobjekte/')

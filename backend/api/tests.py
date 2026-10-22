@@ -107,6 +107,9 @@ class ZugriffTests(ApiTestCase):
 
         self.assertEqual([m["id"] for m in self.client.get("/api/mietobjekte/").json()], [self.objekt.id])
 
+    def test_benutzer_ist_der_angemeldete(self):
+        self.assertEqual(self.client.get("/api/benutzer/").json()["username"], "eigentuemer")
+
 
 class BuchungTests(ApiTestCase):
     def importieren(self, inhalt):

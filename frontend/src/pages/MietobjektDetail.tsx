@@ -3,6 +3,7 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Grid from '@mui/material/Grid'
 import IconButton from '@mui/material/IconButton'
+import InputAdornment from '@mui/material/InputAdornment'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
@@ -15,6 +16,7 @@ import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import DeleteIcon from '@mui/icons-material/Delete'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { ApiError } from '../api/client'
@@ -35,7 +37,7 @@ import {
 import BodenrichtwertDialog from '../components/BodenrichtwertDialog'
 import DarlehenDialog from '../components/DarlehenDialog'
 import FarbAuswahl from '../components/FarbAuswahl'
-import { formatEuro, laenderName, LEER } from '../format'
+import { formatEuro, laenderName } from '../format'
 
 type Feld = Exclude<keyof Mietobjekt, 'id'>
 type Fehler = Partial<Record<string, string[]>>
@@ -98,6 +100,44 @@ function Abschnitt({ titel, children }: { titel: string; children: ReactNode }) 
 
 function Zelle({ children, breit }: { children: ReactNode; breit?: boolean }) {
   return <Grid size={breit ? { xs: 12, md: 8 } : { xs: 12, sm: 6, md: 4 }}>{children}</Grid>
+}
+
+interface OeffnenFeldProps {
+  label: string
+  wert: string
+  helperText: string
+  ariaLabel: string
+  onOpen: () => void
+}
+
+// Read-only value whose editing happens in a popup: a click anywhere on the field opens it.
+function OeffnenFeld({ label, wert, helperText, ariaLabel, onOpen }: OeffnenFeldProps) {
+  return (
+    <TextField
+      label={label}
+      value={wert}
+      helperText={helperText}
+      fullWidth
+      // The icon button has no handler of its own: its click (also via keyboard) bubbles up to here.
+      onClick={onOpen}
+      sx={{
+        '& .MuiInputBase-root': { cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } },
+        '& .MuiInputBase-input': { cursor: 'pointer' },
+      }}
+      slotProps={{
+        htmlInput: { readOnly: true },
+        input: {
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton edge="end" aria-label={ariaLabel}>
+                <OpenInNewIcon />
+              </IconButton>
+            </InputAdornment>
+          ),
+        },
+      }}
+    />
+  )
 }
 
 interface FormularProps {
@@ -211,6 +251,16 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
               slotProps={{ htmlInput: { maxLength: 2 } }}
             />
           </Zelle>
+          <Grid size={12}>
+            <FarbAuswahl
+              value={werte.farbe}
+              onChange={(farbe) => setFeld('farbe', farbe)}
+              error={fehler.farbe?.join(' ')}
+            />
+          </Grid>
+        </Abschnitt>
+
+        <Abschnitt titel="Kauf & Finanzierung">
           <Zelle>
             <TextField
               label="Kaufdatum"
@@ -223,45 +273,34 @@ function MietobjektFormular({ mietobjekt, onDarlehen, onBodenrichtwert }: Formul
             <TextField label="Kaufpreis (€)" {...feld('kaufpreis')} />
           </Zelle>
           <Zelle>
-            <TextField label="Grundschuld (€)" {...feld('grundschuld')} />
-          </Zelle>
-          <Zelle>
             <TextField label="Marktwert (€)" {...feld('marktwert')} />
           </Zelle>
           <Zelle>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              {/* From the props, not the form state: it changes when a Darlehen is saved. */}
-              <TextField
-                label="Restschuld"
-                value={formatEuro(mietobjekt.restschuld, 2)}
-                fullWidth
-                slotProps={{ htmlInput: { readOnly: true } }}
-              />
-              <Button variant="outlined" onClick={onDarlehen}>
-                Darlehen
-              </Button>
-            </Stack>
+            <TextField label="Grundschuld (€)" {...feld('grundschuld')} />
+          </Zelle>
+          {/* Both from the props, not the form state: they change when the popups save. */}
+          <Zelle>
+            <OeffnenFeld
+              label="Restschuld"
+              wert={mietobjekt.restschuld ? formatEuro(mietobjekt.restschuld, 2) : 'Kein Darlehen – anlegen'}
+              helperText="Darlehen anzeigen und bearbeiten"
+              ariaLabel="Darlehen öffnen"
+              onOpen={onDarlehen}
+            />
           </Zelle>
           <Zelle>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <TextField
-                label="Bodenrichtwert"
-                value={mietobjekt.bodenrichtwert ? `${formatEuro(mietobjekt.bodenrichtwert, 2)}/m²` : LEER}
-                fullWidth
-                slotProps={{ htmlInput: { readOnly: true } }}
-              />
-              <Button variant="outlined" onClick={onBodenrichtwert}>
-                Verlauf
-              </Button>
-            </Stack>
-          </Zelle>
-          <Grid size={12}>
-            <FarbAuswahl
-              value={werte.farbe}
-              onChange={(farbe) => setFeld('farbe', farbe)}
-              error={fehler.farbe?.join(' ')}
+            <OeffnenFeld
+              label="Bodenrichtwert"
+              wert={
+                mietobjekt.bodenrichtwert
+                  ? `${formatEuro(mietobjekt.bodenrichtwert, 2)}/m²`
+                  : 'Noch kein Wert – erfassen'
+              }
+              helperText="Verlauf anzeigen und Werte erfassen"
+              ariaLabel="Bodenrichtwert-Verlauf öffnen"
+              onOpen={onBodenrichtwert}
             />
-          </Grid>
+          </Zelle>
         </Abschnitt>
 
         <Abschnitt titel="Ausstattung">

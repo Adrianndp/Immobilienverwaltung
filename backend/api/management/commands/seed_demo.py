@@ -172,25 +172,39 @@ KOSTENARTEN = [
 # Keyed by the name used in Buchungen (firmenname, or "vorname nachname").
 LIEFERANTEN = {
     "Telekom Deutschland GmbH": dict(
-        firmenname="Telekom Deutschland GmbH", strasse="Landgrabenweg", hausnummer="151", plz="53227", ort="Bonn",
-        telefon="0800 3301000",
+        firmenname="Telekom Deutschland GmbH", vorname="Sabine", nachname="Krüger",
+        strasse="Landgrabenweg", hausnummer="151", plz="53227", ort="Bonn", land="DE",
+        email="geschaeftskunden@telekom.example", telefon="0228 4410273",
     ),
     "Stadtwerke Karlsruhe": dict(
-        firmenname="Stadtwerke Karlsruhe", strasse="Daxlander Straße", hausnummer="72", plz="76185", ort="Karlsruhe",
-        email="service@example-stadtwerke.de",
+        firmenname="Stadtwerke Karlsruhe", vorname="Markus", nachname="Engel",
+        strasse="Daxlander Straße", hausnummer="72", plz="76185", ort="Karlsruhe", land="DE",
+        email="kundenservice@stadtwerke-karlsruhe.example", telefon="0721 5996014",
     ),
     "Sanitär Huber GmbH": dict(
-        firmenname="Sanitär Huber GmbH", strasse="Eisenbahnstraße", hausnummer="14", plz="04315", ort="Leipzig",
+        firmenname="Sanitär Huber GmbH", vorname="Stefan", nachname="Huber",
+        strasse="Eisenbahnstraße", hausnummer="14", plz="04315", ort="Leipzig", land="DE",
         email="info@sanitaer-huber.example", telefon="0341 6667788",
     ),
-    "Klaus Neumann": dict(vorname="Klaus", nachname="Neumann", ort="Berlin", telefon="0171 2223344"),
-    "Hausverwaltung Meier & Partner": dict(
-        firmenname="Hausverwaltung Meier & Partner", strasse="Karl-Liebknecht-Straße", hausnummer="9", plz="04107",
-        ort="Leipzig", email="buchhaltung@hv-meier.example",
+    "Klaus Neumann": dict(
+        vorname="Klaus", nachname="Neumann",
+        strasse="Boxhagener Straße", hausnummer="63", plz="10245", ort="Berlin", land="DE",
+        email="klaus.neumann@malermeister-neumann.example", telefon="0171 2223344",
     ),
-    "Küchenstudio Brandt": dict(firmenname="Küchenstudio Brandt", plz="48143", ort="Münster"),
+    "Hausverwaltung Meier & Partner": dict(
+        firmenname="Hausverwaltung Meier & Partner", vorname="Claudia", nachname="Meier",
+        strasse="Karl-Liebknecht-Straße", hausnummer="9", plz="04107", ort="Leipzig", land="DE",
+        email="buchhaltung@hv-meier.example", telefon="0341 2589340",
+    ),
+    "Küchenstudio Brandt": dict(
+        firmenname="Küchenstudio Brandt", vorname="Jan", nachname="Brandt",
+        strasse="Hammer Straße", hausnummer="214", plz="48153", ort="Münster", land="DE",
+        email="kontakt@kuechenstudio-brandt.example", telefon="0251 7704152",
+    ),
     "Hanse Versicherung AG": dict(
-        firmenname="Hanse Versicherung AG", strasse="Am Sandtorkai", hausnummer="1", plz="20457", ort="Hamburg",
+        firmenname="Hanse Versicherung AG", vorname="Tobias", nachname="Petersen",
+        strasse="Am Sandtorkai", hausnummer="1", plz="20457", ort="Hamburg", land="DE",
+        email="schaden-service@hanse-versicherung.example", telefon="040 3006218",
     ),
 }  # fmt: skip
 

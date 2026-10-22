@@ -66,9 +66,9 @@ function MietvertragKarte({ mietvertrag: mv, onEdit }: { mietvertrag: Mietvertra
         <Stack spacing={0.5}>
           <Zeile label="Vertragsbeginn" wert={formatDatum(mv.beginn)} />
           <Zeile label="Vertragsende" wert={mv.ende ? formatDatum(mv.ende) : 'unbefristet'} />
-          <Zeile label="Kaltmiete" wert={formatEuro(mv.kaltmiete)} />
-          <Zeile label="Nebenkosten" wert={formatEuro(mv.nebenkosten)} />
-          <Zeile label="Kaution" wert={formatEuro(mv.kaution)} />
+          <Zeile label="Kaltmiete" wert={formatEuro(mv.kaltmiete, 2)} />
+          <Zeile label="Nebenkosten" wert={formatEuro(mv.nebenkosten, 2)} />
+          <Zeile label="Kaution" wert={formatEuro(mv.kaution, 2)} />
           <Zeile label="Objekt" wert={`${mv.mietobjekt_name} – ${mv.einheit_name}`} />
         </Stack>
         <Stack spacing={0.5}>

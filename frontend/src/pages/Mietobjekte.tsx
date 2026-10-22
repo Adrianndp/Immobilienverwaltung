@@ -50,7 +50,7 @@ function MietobjektKarte({ mietobjekt: m }: { mietobjekt: Mietobjekt }) {
         <Stack spacing={0.5}>
           <Zeile label="Kaufdatum" wert={formatDatum(m.kaufdatum)} />
           <Zeile label="Kaufpreis" wert={formatEuro(m.kaufpreis)} />
-          <Zeile label="Restschuld" wert={formatEuro(m.restschuld)} />
+          <Zeile label="Restschuld" wert={formatEuro(m.restschuld, 2)} />
           <Zeile label="Grundschuld" wert={formatEuro(m.grundschuld)} />
           <Zeile
             label="Marktwert"

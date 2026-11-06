@@ -15,7 +15,7 @@ function Layout() {
   const { data: benutzer } = useBenutzer()
   // First name if set in Django, otherwise the username. Plain "Hallo!" while loading.
   const name = benutzer && (benutzer.first_name || benutzer.username)
-  const begruessung = name ? `Hi, ${name}!` : 'Hallo!'
+  const begruessung = name ? `Hallo, ${name}!` : 'Hallo!'
 
   return (
     <Box sx={{ display: 'flex' }}>

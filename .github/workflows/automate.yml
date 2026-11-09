@@ -36,6 +36,8 @@ jobs:
             cache: pip
             cache-dependency-path: backend/requirements.txt
         - run: pip install -r requirements.txt
+        # Fails if a model change has no migration file.
+        - run: python manage.py makemigrations --check --dry-run
         - run: python manage.py test
 
     frontend:

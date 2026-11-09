@@ -38,6 +38,7 @@ urlpatterns = [
     path('bodenrichtwerte/<int:pk>/', BodenrichtwertViewSet.as_view(DETAIL), name='bodenrichtwerte-detail'),
     path('buchungen/', BuchungViewSet.as_view({'get': 'list'}), name='buchungen-list'),
     path('buchungen/import/', BuchungViewSet.as_view({'post': 'importieren'}), name='buchungen-import'),
+    path('buchungen/alle-loeschen/', BuchungViewSet.as_view({'post': 'alle_loeschen'}), name='buchungen-alle-loeschen'),
     path('buchungen/<int:pk>/', BuchungViewSet.as_view({'patch': 'partial_update'}), name='buchungen-detail'),
     path('auswertung/deckungsbeitrag/', DeckungsbeitragView.as_view(), name='auswertung-deckungsbeitrag'),
     path('auswertung/anlage-v/', AnlageVView.as_view(), name='auswertung-anlage-v'),

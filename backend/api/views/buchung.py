@@ -156,3 +156,10 @@ class BuchungViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.Ge
                 _, neu = Buchung.objects.get_or_create(eigentuemer=request.user, **zeile)
                 importiert += neu
         return Response({"importiert": importiert, "uebersprungen": len(zeilen) - importiert})
+
+    @action(detail=False, methods=["post"], url_path="alle-loeschen")
+    def alle_loeschen(self, request):
+        # The Zuordnungen go with them (CASCADE): Rechnungen become open again, Sondertilgungen drop out.
+        with transaction.atomic():
+            _, geloescht = Buchung.objects.filter(eigentuemer=request.user).delete()
+        return Response({"geloescht": geloescht.get(Buchung._meta.label, 0)})

@@ -13,15 +13,17 @@ import Typography from '@mui/material/Typography'
 import AddLinkIcon from '@mui/icons-material/AddLink'
 import CancelIcon from '@mui/icons-material/Cancel'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
 import ErrorIcon from '@mui/icons-material/Error'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import { useRef, useState, type ChangeEvent } from 'react'
 import { validierungsFehler } from '../api/client'
-import { useBuchungen, useImportBuchungen } from '../api/hooks'
+import { useAlleBuchungenLoeschen, useBuchungen, useImportBuchungen } from '../api/hooks'
 import type { Buchung } from '../api/types'
 import BuchungZuordnenDialog from '../components/BuchungZuordnenDialog'
 import TabellenContainer, { DatumZelle } from '../components/Tabelle'
 import Laden, { Ladefehler } from '../components/Laden'
+import LoeschenDialog from '../components/LoeschenDialog'
 import { useMeldung } from '../components/meldung'
 import { formatDatum, formatEuro, oderLeer } from '../format'
 
@@ -49,7 +51,11 @@ function Konto() {
   const [importierend, setImportierend] = useState(false)
   const [zuzuordnen, setZuzuordnen] = useState<Buchung>()
   const [nurOffene, setNurOffene] = useState(false)
+  const alleLoeschen = useAlleBuchungenLoeschen()
+  const [loeschenOffen, setLoeschenOffen] = useState(false)
+  const [loeschend, setLoeschend] = useState(false)
   const offene = buchungen?.filter(istOffen) ?? []
+  const zugeordnet = buchungen?.filter((b) => b.zuordnungen.length > 0).length ?? 0
   const angezeigt = nurOffene ? offene : buchungen
 
   async function handleDatei(event: ChangeEvent<HTMLInputElement>) {
@@ -72,6 +78,20 @@ function Konto() {
     }
   }
 
+  async function handleAlleLoeschen() {
+    setLoeschend(true)
+    try {
+      const { geloescht } = await alleLoeschen()
+      meldung(`${geloescht} Buchungen gelöscht`)
+      setLoeschenOffen(false)
+    } catch (e) {
+      meldung({ text: e instanceof Error ? e.message : String(e), fehler: true })
+    } finally {
+      setLoeschend(false)
+      reload()
+    }
+  }
+
   const importButton = (
     <Button
       variant="contained"
@@ -87,8 +107,31 @@ function Konto() {
     <Stack spacing={2}>
       <Stack direction="row" useFlexGap sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h4">Konto</Typography>
-        {importButton}
+        <Stack direction="row" useFlexGap sx={{ flexWrap: 'wrap', gap: 1 }}>
+          {!!buchungen?.length && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteSweepIcon />}
+              onClick={() => setLoeschenOffen(true)}
+            >
+              Alle Buchungen löschen
+            </Button>
+          )}
+          {importButton}
+        </Stack>
       </Stack>
+      <LoeschenDialog
+        offen={loeschenOffen}
+        titel="Alle Buchungen löschen?"
+        loeschend={loeschend}
+        onAbbrechen={() => setLoeschenOffen(false)}
+        onLoeschen={handleAlleLoeschen}
+      >
+        Es werden {buchungen?.length ?? 0} Buchungen endgültig gelöscht, davon {zugeordnet} zugeordnet. Zuordnungen
+        gehen verloren: Rechnungen werden wieder offen, Mieteinnahmen und Sondertilgungen entfallen. Dieser Schritt
+        kann nicht rückgängig gemacht werden.
+      </LoeschenDialog>
       <input ref={dateiInput} type="file" accept=".csv,text/csv" hidden onChange={handleDatei} />
       {zuzuordnen && (
         <BuchungZuordnenDialog buchung={zuzuordnen} onClose={() => setZuzuordnen(undefined)} onSaved={reload} />

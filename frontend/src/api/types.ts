@@ -291,6 +291,10 @@ export interface Buchung {
   nicht_zugeordnet: string
 }
 
+export interface BuchungenGeloescht {
+  geloescht: number
+}
+
 export interface BuchungImport {
   importiert: number
   uebersprungen: number

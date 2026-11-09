@@ -232,6 +232,25 @@ class BuchungTests(ApiTestCase):
 
         self.assertEqual(r.status_code, 400)
 
+    def test_alle_loeschen(self):
+        self.buchung("1000")
+        Zuordnung.objects.create(buchung=self.buchung("-400"), betrag=D("400"), rechnung=self.rechnung)
+        fremd = User.objects.create_user("andere")
+        Buchung.objects.create(
+            eigentuemer=fremd, buchungstag=date(2026, 3, 5), wertstellung=date(2026, 3, 5), kontoinhaber="X",
+            buchungstext="Fremd", buchungsart="Überweisung", betrag=D("50"),
+        )  # fmt: skip
+
+        r = self.client.post("/api/buchungen/alle-loeschen/")
+
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json(), {"geloescht": 2})
+        self.assertFalse(Buchung.objects.filter(eigentuemer=self.user).exists())
+        self.assertFalse(Zuordnung.objects.exists())
+        # Other users' Buchungen stay, the Rechnung itself too.
+        self.assertTrue(Buchung.objects.filter(eigentuemer=fremd).exists())
+        self.assertTrue(Rechnung.objects.filter(id=self.rechnung.id).exists())
+
     def test_sondertilgung_nur_bei_darlehen(self):
         r = self.zuordnen(self.buchung("-400"), betrag="400", rechnung=self.rechnung.id, ist_sondertilgung=True)
 

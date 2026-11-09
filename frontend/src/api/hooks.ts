@@ -10,6 +10,7 @@ import type {
   BodenrichtwertInput,
   Buchung,
   BuchungImport,
+  BuchungenGeloescht,
   Darlehen,
   DarlehenInput,
   Deckungsbeitrag,
@@ -154,6 +155,10 @@ export function useImportBuchungen() {
     data.append('datei', datei)
     return apiUpload<BuchungImport>('/buchungen/import/', data)
   }
+}
+
+export function useAlleBuchungenLoeschen() {
+  return () => apiRequest<BuchungenGeloescht>('POST', '/buchungen/alle-loeschen/')
 }
 
 export function useZuordnenBuchung() {

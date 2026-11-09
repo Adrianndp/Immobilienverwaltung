@@ -205,7 +205,19 @@ export interface Mietvertrag {
 export type MietvertragInput = Omit<
   Mietvertrag,
   'id' | 'mieter' | 'einheit_name' | 'mietobjekt_name' | 'farbe' | 'einnahmen_seit_beginn' | 'kosten_seit_beginn'
-> & { mieter: Omit<Mieter, 'id'> }
+> & {
+  mieter: Omit<Mieter, 'id'>
+  // After the overlap warning: end the overlapping older contracts the day before beginn.
+  aelteren_beenden?: boolean
+}
+
+// 409 body when the Einheit is already let in the period.
+export interface Ueberschneidung {
+  code: 'ueberschneidung'
+  konflikte: { id: number; mieter_name: string; beginn: string; ende: string | null; einheit_label: string }[]
+  // False if a conflicting contract starts on or after the new beginn: it cannot be ended automatically.
+  kann_beenden: boolean
+}
 
 export type Kategorie = 'SONSTIGE' | 'INSTANDHALTUNG' | 'ABSCHREIBUNG'
 

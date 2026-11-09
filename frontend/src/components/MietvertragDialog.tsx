@@ -4,6 +4,7 @@ import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
@@ -11,17 +12,17 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
-import { validierungsFehler } from '../api/client'
+import { ueberschneidung, validierungsFehler } from '../api/client'
 import {
   useCreateMietvertrag,
   useEinheiten,
   useMietobjekte,
   useUpdateMietvertrag,
 } from '../api/hooks'
-import type { Mieter, Mietvertrag, MietvertragInput } from '../api/types'
+import type { Mieter, Mietvertrag, MietvertragInput, Ueberschneidung } from '../api/types'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
-import { alsEingabe, dezimal, laenderName } from '../format'
+import { alsEingabe, dezimal, formatDatum, laenderName } from '../format'
 
 type MieterFeld = Exclude<keyof Mieter, 'id'>
 type VertragFeld = 'beginn' | 'ende' | 'kaltmiete' | 'nebenkosten' | 'kaution'
@@ -80,6 +81,13 @@ function zuDaten(f: Formular): MietvertragInput {
   }
 }
 
+// "2026-06-01" -> "2026-05-31", in local time like the date inputs.
+function vortag(iso: string) {
+  const [jahr, monat, tag] = iso.split('-').map(Number)
+  const d = new Date(jahr, monat - 1, tag - 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function Abschnitt({ titel, children }: { titel: string; children: ReactNode }) {
   return (
     <div>
@@ -117,6 +125,7 @@ function MietvertragDialog({ mietvertrag, einheit, onClose, onSaved }: Props) {
   const [fehler, setFehler] = useState<Record<string, string>>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()
   const [saving, setSaving] = useState(false)
+  const [konflikt, setKonflikt] = useState<Ueberschneidung>()
 
   const objektNamen = new Map(mietobjekte?.map((m) => [m.id, m.name]))
   const einheitOptionen = (einheiten ?? [])
@@ -152,19 +161,28 @@ function MietvertragDialog({ mietvertrag, einheit, onClose, onSaved }: Props) {
   const datum = { type: 'date', slotProps: { inputLabel: { shrink: true } } }
   const betrag = { slotProps: { htmlInput: { inputMode: 'decimal' } } } as const
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    speichern(false)
+  }
+
+  async function speichern(aelterenBeenden: boolean) {
     setSaving(true)
     setFehler({})
     setAllgemeinerFehler(undefined)
     try {
-      const daten = zuDaten(werte)
+      const daten = { ...zuDaten(werte), ...(aelterenBeenden && { aelteren_beenden: true }) }
       if (mietvertrag) await updateMietvertrag(mietvertrag.id, daten)
       else await createMietvertrag(daten)
       onSaved()
       meldung(mietvertrag ? 'Mieter gespeichert' : 'Mieter angelegt')
       onClose()
     } catch (e) {
+      const ueberschneidet = ueberschneidung(e)
+      if (ueberschneidet) {
+        setKonflikt(ueberschneidet)
+        return
+      }
       const felder = validierungsFehler(e)
       if (felder) {
         const { non_field_errors, detail, ...rest } = felder
@@ -291,6 +309,40 @@ function MietvertragDialog({ mietvertrag, einheit, onClose, onSaved }: Props) {
           </Button>
         </DialogActions>
       </Box>
+
+      {/* Over the form, which stays open with its input on Abbrechen. */}
+      <Dialog open={!!konflikt} onClose={() => setKonflikt(undefined)}>
+        <DialogTitle>Einheit bereits vermietet</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1}>
+            {konflikt?.konflikte.map((k) => (
+              <DialogContentText key={k.id}>
+                {k.einheit_label} ist im Zeitraum bereits an {k.mieter_name} vermietet ({formatDatum(k.beginn)} bis{' '}
+                {k.ende ? formatDatum(k.ende) : 'unbefristet'}).
+              </DialogContentText>
+            ))}
+            {konflikt && !konflikt.kann_beenden && (
+              <DialogContentText>Bitte Zeitraum oder Einheit ändern.</DialogContentText>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setKonflikt(undefined)}>Abbrechen</Button>
+          {konflikt?.kann_beenden && (
+            <Button
+              variant="contained"
+              // Closed first, so a new conflict from the resend can open it again.
+              onClick={() => {
+                setKonflikt(undefined)
+                speichern(true)
+              }}
+            >
+              Vertrag von {[...new Set(konflikt.konflikte.map((k) => k.mieter_name))].join(', ')} zum{' '}
+              {formatDatum(vortag(werte.beginn))} beenden und speichern
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Dialog>
   )
 }

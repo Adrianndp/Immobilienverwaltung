@@ -272,6 +272,63 @@ class BuchungTests(ApiTestCase):
         self.assertEqual(r.status_code, 400)
 
 
+class MietvertragUeberschneidungTests(ApiTestCase):
+    # self.vertrag: Anna Schmidt, Einheit "Gesamt", from 01.01.2026, open-ended.
+
+    def anlegen(self, beginn, ende=None, **extra):
+        return self.client.post("/api/mietvertraege/", {
+            "mieter": {"vorname": "Ben", "nachname": "Neu"}, "einheit": self.vertrag.einheit_id,
+            "beginn": beginn, "ende": ende, "kaltmiete": "900", "nebenkosten": "200", **extra,
+        }, format="json")  # fmt: skip
+
+    def test_ueberschneidung_ohne_bestaetigung_gibt_409(self):
+        r = self.anlegen("2026-06-01")
+
+        self.assertEqual(r.status_code, 409)
+        self.assertEqual(r.json(), {
+            "code": "ueberschneidung",
+            "konflikte": [{
+                "id": self.vertrag.id, "mieter_name": "Anna Schmidt", "beginn": "2026-01-01", "ende": None,
+                "einheit_label": "Wohnung 1 – Gesamt",
+            }],
+            "kann_beenden": True,
+        })  # fmt: skip
+        self.assertEqual(Mietvertrag.objects.count(), 1)
+
+    def test_aelteren_beenden(self):
+        r = self.anlegen("2026-06-01", aelteren_beenden=True)
+
+        self.assertEqual(r.status_code, 201)
+        self.vertrag.refresh_from_db()
+        self.assertEqual(self.vertrag.ende, date(2026, 5, 31))
+        self.assertEqual(Mietvertrag.objects.count(), 2)
+
+    def test_angrenzende_vertraege_sind_erlaubt(self):
+        self.vertrag.ende = date(2026, 2, 28)
+        self.vertrag.save()
+
+        self.assertEqual(self.anlegen("2026-03-01").status_code, 201)
+
+    def test_frueher_beginnender_vertrag_kann_nicht_beenden(self):
+        r = self.anlegen("2025-06-01", aelteren_beenden=True)
+
+        self.assertEqual(r.status_code, 409)
+        self.assertFalse(r.json()["kann_beenden"])
+        self.vertrag.refresh_from_db()
+        self.assertIsNone(self.vertrag.ende)
+
+    def test_bearbeiten_ueberschneidet_sich_nicht_mit_sich_selbst(self):
+        r = self.client.patch(f"/api/mietvertraege/{self.vertrag.id}/", {"kaltmiete": "850"}, format="json")
+
+        self.assertEqual(r.status_code, 200)
+
+    def test_ende_vor_beginn(self):
+        r = self.anlegen("2027-01-01", ende="2026-12-31")
+
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("ende", r.json())
+
+
 class RechnungTests(ApiTestCase):
     def test_anteile_muessen_100_prozent_ergeben(self):
         r = self.client.post("/api/rechnungen/", {

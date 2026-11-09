@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { Ueberschneidung } from './types'
 
 const API_URL = '/api'
 
@@ -35,6 +36,13 @@ export function validierungsFehler(error: unknown): Record<string, string> | und
   }
   sammeln(error.body, '')
   return ergebnis
+}
+
+// The 409 body of a Mietvertrag whose Einheit is already let in that period, otherwise undefined.
+export function ueberschneidung(error: unknown): Ueberschneidung | undefined {
+  if (!(error instanceof ApiError) || error.status !== 409) return undefined
+  const body = error.body as Partial<Ueberschneidung> | undefined
+  return body?.code === 'ueberschneidung' ? (body as Ueberschneidung) : undefined
 }
 
 async function parseResponse<T>(res: Response): Promise<T> {

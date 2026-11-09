@@ -150,7 +150,8 @@ class Darlehen(models.Model):
     art = models.CharField(max_length=9, choices=Art.choices)
     zinsbindung_bis = models.DateField(null=True, blank=True)
     sollzins = models.DecimalField(max_digits=5, decimal_places=3)
-    tilgung = models.DecimalField(max_digits=5, decimal_places=3)
+    # € per month: the constant Rate (Annuitätendarlehen) or the constant Tilgung (Tilgungsdarlehen).
+    monatsbetrag = models.DecimalField(max_digits=12, decimal_places=2)
 
     def tilgungsplan(self):
         """Monthly {datum, zins, tilgung, rest}, first payment one month after beginn, until repaid (max. 600 months)."""
@@ -164,24 +165,19 @@ class Darlehen(models.Model):
             # 31 Jan + 1 month -> 28/29 Feb
             return date(jahr, monat, min(tag.day, calendar.monthrange(jahr, monat)[1]))
 
-        annuitaet = runden(self.betrag * (self.sollzins + self.tilgung) / 100 / 12)
-        tilgung_fest = runden(self.betrag * self.tilgung / 100 / 12)
         rest = self.betrag
         plan = []
         for n in range(1, 601):
             if rest <= 0:
                 break
             zins = runden(rest * self.sollzins / 100 / 12)
-            tilgung = annuitaet - zins if self.art == self.Art.ANNUITAET else tilgung_fest
+            # Annuität: the Rate stays, the Tilgung grows as the Zins falls. Tilgungsdarlehen: the Tilgung stays.
+            tilgung = self.monatsbetrag - zins if self.art == self.Art.ANNUITAET else self.monatsbetrag
             # The last payment only repays what is left.
             tilgung = min(tilgung, rest)
             rest -= tilgung
             plan.append({"datum": plus_monate(self.beginn, n), "zins": zins, "tilgung": tilgung, "rest": rest})
         return plan
-
-    def rate(self):
-        plan = self.tilgungsplan()
-        return plan[0]["zins"] + plan[0]["tilgung"] if plan else Decimal("0")
 
     def restschuld(self, stichtag=None):
         stichtag = stichtag or timezone.localdate()

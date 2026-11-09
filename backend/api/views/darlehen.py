@@ -1,3 +1,5 @@
+from decimal import ROUND_HALF_UP, Decimal
+
 from rest_framework import permissions, serializers, viewsets
 
 from ..models import Darlehen
@@ -5,7 +7,6 @@ from ..models import Darlehen
 
 class DarlehenSerializer(serializers.ModelSerializer):
     mietobjekt_name = serializers.CharField(source="mietobjekt.name", read_only=True)
-    rate = serializers.SerializerMethodField()
     restschuld = serializers.SerializerMethodField()
     verlauf = serializers.SerializerMethodField()
     zahlungen = serializers.SerializerMethodField()
@@ -13,9 +14,6 @@ class DarlehenSerializer(serializers.ModelSerializer):
     class Meta:
         model = Darlehen
         fields = "__all__"
-
-    def get_rate(self, obj):
-        return str(obj.rate())
 
     def get_restschuld(self, obj):
         return str(obj.restschuld())
@@ -43,14 +41,22 @@ class DarlehenSerializer(serializers.ModelSerializer):
     def validate(self, data):
         betrag = data.get("betrag", getattr(self.instance, "betrag", None))
         sollzins = data.get("sollzins", getattr(self.instance, "sollzins", None))
-        tilgung = data.get("tilgung", getattr(self.instance, "tilgung", None))
+        art = data.get("art", getattr(self.instance, "art", None))
+        monatsbetrag = data.get("monatsbetrag", getattr(self.instance, "monatsbetrag", None))
 
         if betrag is not None and betrag <= 0:
             raise serializers.ValidationError({"betrag": "Betrag muss größer als 0 sein."})
         if sollzins is not None and sollzins < 0:
             raise serializers.ValidationError({"sollzins": "Sollzins darf nicht negativ sein."})
-        if tilgung is not None and tilgung <= 0:
-            raise serializers.ValidationError({"tilgung": "Tilgung muss größer als 0 sein."})
+        if monatsbetrag is not None and monatsbetrag <= 0:
+            raise serializers.ValidationError({"monatsbetrag": "Betrag muss größer als 0 sein."})
+        # Otherwise the Annuität never repays anything: the whole Rate goes to Zins.
+        if art == Darlehen.Art.ANNUITAET and None not in (betrag, sollzins, monatsbetrag) and betrag > 0:
+            zins = (betrag * sollzins / 100 / 12).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if monatsbetrag <= zins:
+                raise serializers.ValidationError(
+                    {"monatsbetrag": f"Die Rate muss größer sein als der Zins im ersten Monat ({zins:.2f} €)."}
+                )
 
         return data
 

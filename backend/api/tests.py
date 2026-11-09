@@ -35,10 +35,13 @@ def mietobjekt(eigentuemer, **kw):
     )
 
 
-def darlehen(objekt, art=Darlehen.Art.ANNUITAET):
+def darlehen(objekt, art=Darlehen.Art.ANNUITAET, monatsbetrag=None):
+    # Rate 500 € (Annuität) or Tilgung 200 € per month (Tilgungsdarlehen).
+    if monatsbetrag is None:
+        monatsbetrag = D("500") if art == Darlehen.Art.ANNUITAET else D("200")
     return Darlehen.objects.create(
         mietobjekt=objekt, bank="Testbank", iban="DE00", beginn=date(2026, 1, 1), betrag=D("120000"),
-        art=art, sollzins=D("3"), tilgung=D("2"),
+        art=art, sollzins=D("3"), monatsbetrag=monatsbetrag,
     )
 
 
@@ -51,8 +54,7 @@ class DarlehenTests(TestCase):
         d = darlehen(self.objekt)
         plan = d.tilgungsplan()
 
-        # 120000 * (3 % + 2 %) / 12
-        self.assertEqual(d.rate(), D("500.00"))
+        # Zins 120000 * 3 % / 12 = 300, Tilgung = Rate 500 - Zins.
         self.assertEqual(
             plan[0], {"datum": date(2026, 2, 1), "zins": D("300.00"), "tilgung": D("200.00"), "rest": D("119800.00")}
         )
@@ -64,6 +66,24 @@ class DarlehenTests(TestCase):
 
         self.assertTrue(all(m["tilgung"] == D("200.00") for m in plan))
         self.assertEqual(plan[-1]["rest"], 0)
+
+    def test_tilgungsdarlehen_rate_sinkt(self):
+        plan = darlehen(self.objekt, Darlehen.Art.TILGUNG).tilgungsplan()
+
+        # Rate = Tilgung + Zins, the Zins falls with the Restschuld.
+        self.assertEqual(plan[0]["zins"] + plan[0]["tilgung"], D("500.00"))
+        self.assertEqual(plan[1]["zins"] + plan[1]["tilgung"], D("499.50"))
+
+    def test_beispiel_restschulden(self):
+        def rest(art, monatsbetrag):
+            d = Darlehen.objects.create(
+                mietobjekt=self.objekt, bank="Testbank", iban="DE00", beginn=date(2020, 10, 1),
+                betrag=D("189000"), art=art, sollzins=D("0.79"), monatsbetrag=D(monatsbetrag),
+            )
+            return d.restschuld(stichtag=date(2026, 11, 9))
+
+        self.assertEqual(rest(Darlehen.Art.TILGUNG, "524.79"), D("150690.33"))
+        self.assertEqual(rest(Darlehen.Art.ANNUITAET, "649.22"), D("149767.72"))
 
     def test_restschuld_und_zinsen(self):
         d = darlehen(self.objekt)
@@ -174,6 +194,26 @@ class RechnungTests(ApiTestCase):
         Zuordnung.objects.create(buchung=self.buchung("-400"), betrag=D("400"), rechnung=self.rechnung)
 
         self.assertEqual(self.client.delete(f"/api/rechnungen/{self.rechnung.id}/").status_code, 400)
+
+
+class DarlehenApiTests(ApiTestCase):
+    def anlegen(self, art, monatsbetrag):
+        return self.client.post("/api/darlehen/", {
+            "mietobjekt": self.objekt.id, "bank": "Testbank", "iban": "DE00", "beginn": "2026-01-01",
+            "betrag": "120000", "art": art, "sollzins": "3", "monatsbetrag": monatsbetrag,
+        })  # fmt: skip
+
+    def test_annuitaet_rate_muss_ueber_dem_ersten_zins_liegen(self):
+        # Zins im ersten Monat: 120000 * 3 % / 12 = 300 €.
+        r = self.anlegen("ANNUITAET", "300")
+
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("300.00", r.json()["monatsbetrag"][0])
+        self.assertEqual(self.anlegen("ANNUITAET", "300.01").status_code, 201)
+
+    def test_tilgungsdarlehen_darf_unter_dem_zins_liegen(self):
+        self.assertEqual(self.anlegen("TILGUNG", "200").status_code, 201)
+        self.assertEqual(self.anlegen("TILGUNG", "0").status_code, 400)
 
 
 class AuswertungTests(ApiTestCase):

@@ -339,8 +339,8 @@ export interface Darlehen {
   art: DarlehenArt
   zinsbindung_bis: string | null
   sollzins: string
-  tilgung: string
-  rate: string
+  // € per month: the constant Rate (Annuität) or the constant Tilgung (Tilgungsdarlehen).
+  monatsbetrag: string
   restschuld: string
   verlauf: { datum: string; rest: string }[]
   zahlungen: { datum: string; betrag: string; betreff: string; bank: string; kontostand: string }[]
@@ -348,7 +348,7 @@ export interface Darlehen {
 
 export type DarlehenInput = Pick<
   Darlehen,
-  'mietobjekt' | 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
+  'mietobjekt' | 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'monatsbetrag'
 >
 
 export interface Bodenrichtwert {

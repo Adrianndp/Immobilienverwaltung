@@ -129,17 +129,17 @@ DARLEHEN = [
     dict(
         mietobjekt="linden", bank="Volksbank Berlin", iban="DE21 1009 0000 2345 6789 01",
         beginn=date(2019, 4, 1), betrag=D("230000"), art="ANNUITAET", zinsbindung_bis=date(2029, 4, 1),
-        sollzins=D("1.650"), tilgung=D("2.000"),
+        sollzins=D("1.650"), monatsbetrag=D("699.58"),
     ),
     dict(
         mietobjekt="garten", bank="Sparkasse Leipzig", iban="DE86 8605 5592 1090 2233 44",
         beginn=date(2017, 9, 15), betrag=D("550000"), art="TILGUNG", zinsbindung_bis=date(2027, 9, 15),
-        sollzins=D("1.200"), tilgung=D("2.500"),
+        sollzins=D("1.200"), monatsbetrag=D("1145.83"),
     ),
     dict(
         mietobjekt="wg", bank="Sparkasse Münsterland Ost", iban="DE74 4005 0150 0034 8172 65",
         beginn=date(2022, 6, 1), betrag=D("160000"), art="ANNUITAET", zinsbindung_bis=date(2032, 6, 1),
-        sollzins=D("3.200"), tilgung=D("2.000"),
+        sollzins=D("3.200"), monatsbetrag=D("693.33"),
     ),
 ]  # fmt: skip
 

@@ -26,7 +26,13 @@ import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
 import { alsEingabe, dezimal, formatEuro, LEER } from '../format'
 
-type Feld = 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
+type Feld = 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'monatsbetrag'
+
+// What monatsbetrag means for each Art.
+const MONATSBETRAG_LABELS: Record<Darlehen['art'], string> = {
+  ANNUITAET: 'Monatliche Rate (€)',
+  TILGUNG: 'Tilgungsrate (€ / Monat)',
+}
 
 // "1.850" -> "1,85": percentages with up to 3 decimals, without trailing zeros.
 function prozentEingabe(wert: string) {
@@ -58,7 +64,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
     art: darlehen?.art ?? 'ANNUITAET',
     zinsbindung_bis: darlehen?.zinsbindung_bis ?? '',
     sollzins: darlehen ? prozentEingabe(darlehen.sollzins) : '',
-    tilgung: darlehen ? prozentEingabe(darlehen.tilgung) : '',
+    monatsbetrag: alsEingabe(darlehen?.monatsbetrag ?? null),
   })
   const [fehler, setFehler] = useState<Record<string, string>>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()
@@ -84,7 +90,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
       ...werte,
       betrag: dezimal(werte.betrag),
       sollzins: dezimal(werte.sollzins),
-      tilgung: dezimal(werte.tilgung),
+      monatsbetrag: dezimal(werte.monatsbetrag),
       art: werte.art as Darlehen['art'],
       zinsbindung_bis: werte.zinsbindung_bis || null,
       mietobjekt: mietobjekt.id,
@@ -168,16 +174,10 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
                   slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                 />
                 <TextField
-                  label="Tilgung (%)"
+                  label={MONATSBETRAG_LABELS[werte.art as Darlehen['art']]}
                   required
-                  {...feld('tilgung')}
+                  {...feld('monatsbetrag')}
                   slotProps={{ htmlInput: { inputMode: 'decimal' } }}
-                />
-                <TextField
-                  label="Rate"
-                  value={darlehen ? formatEuro(darlehen.rate, 2) : LEER}
-                  fullWidth
-                  slotProps={{ htmlInput: { readOnly: true } }}
                 />
               </Stack>
             </Grid>

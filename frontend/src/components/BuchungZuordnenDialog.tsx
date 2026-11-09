@@ -22,7 +22,7 @@ import type { Buchung, Zuordnung } from '../api/types'
 import { Zeile } from './InfoKarte'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
-import { dezimal, formatDatum, formatEuro } from '../format'
+import { alsEingabe, dezimal, formatDatum, formatEuro } from '../format'
 
 type ZielFeld = 'mietvertrag' | 'rechnung' | 'darlehen'
 
@@ -60,8 +60,8 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
   const betragAbs = buchung.betrag.replace('-', '')
   const [zeilen, setZeilen] = useState<ZuordnungsZeile[]>(
     buchung.zuordnungen.length
-      ? buchung.zuordnungen.map((z) => ({ ziel: zielVon(z), betrag: z.betrag }))
-      : [{ ziel: '', betrag: betragAbs }],
+      ? buchung.zuordnungen.map((z) => ({ ziel: zielVon(z), betrag: alsEingabe(z.betrag) }))
+      : [{ ziel: '', betrag: alsEingabe(betragAbs) }],
   )
   const [fehler, setFehler] = useState<Record<string, string>>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()

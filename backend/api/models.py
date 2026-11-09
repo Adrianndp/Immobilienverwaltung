@@ -3,6 +3,7 @@ from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -62,7 +63,10 @@ class Mietobjekt(models.Model):
     weg_nenner = models.PositiveSmallIntegerField(
         choices=[(100, "/100"), (1000, "/1000")], null=True, blank=True
     )
-    zimmer = models.PositiveSmallIntegerField(default=0)
+    # Half rooms count, e.g. 3,5 Zimmer.
+    zimmer = models.DecimalField(
+        max_digits=3, decimal_places=1, default=0, validators=[MinValueValidator(0)]
+    )
     baeder = models.PositiveSmallIntegerField(default=0)
     kueche = models.PositiveSmallIntegerField(default=0)
     balkon = models.PositiveSmallIntegerField(default=0)

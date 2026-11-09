@@ -14,7 +14,7 @@ import { useState, type FormEvent } from 'react'
 import { validierungsFehler } from '../api/client'
 import { useAnschaffungskosten, useUpdateAnschaffungskosten } from '../api/hooks'
 import type { Anschaffungskosten, AnschaffungskostenInput, Mietobjekt } from '../api/types'
-import { dezimal, formatEuro } from '../format'
+import { alsEingabe, dezimal, formatEuro } from '../format'
 import Laden, { Ladefehler } from './Laden'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
@@ -81,7 +81,7 @@ function summen(werte: Werte) {
 function eingaben(daten: Anschaffungskosten): Werte {
   const felder = [...ANSCHAFFUNG, ...HERSTELLUNG, ...NACHTRAEGLICH, GRUND_BODEN].map((z) => z.feld)
   return Object.fromEntries(
-    felder.map((feld) => [feld, daten[feld] === null || Number(daten[feld]) === 0 ? '' : daten[feld]]),
+    felder.map((feld) => [feld, Number(daten[feld]) === 0 ? '' : alsEingabe(daten[feld])]),
   ) as Werte
 }
 

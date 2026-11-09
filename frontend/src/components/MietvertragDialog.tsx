@@ -21,7 +21,7 @@ import {
 import type { Mieter, Mietvertrag, MietvertragInput } from '../api/types'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
-import { dezimal, laenderName } from '../format'
+import { alsEingabe, dezimal, laenderName } from '../format'
 
 type MieterFeld = Exclude<keyof Mieter, 'id'>
 type VertragFeld = 'beginn' | 'ende' | 'kaltmiete' | 'nebenkosten' | 'kaution'
@@ -61,9 +61,9 @@ function anfangswerte(mv?: Mietvertrag, einheit?: number): Formular {
     einheit: mv?.einheit ?? einheit ?? '',
     beginn: mv?.beginn ?? '',
     ende: mv?.ende ?? '',
-    kaltmiete: mv?.kaltmiete ?? '',
-    nebenkosten: mv?.nebenkosten ?? '',
-    kaution: mv?.kaution ?? '',
+    kaltmiete: alsEingabe(mv?.kaltmiete ?? null),
+    nebenkosten: alsEingabe(mv?.nebenkosten ?? null),
+    kaution: alsEingabe(mv?.kaution ?? null),
   }
 }
 

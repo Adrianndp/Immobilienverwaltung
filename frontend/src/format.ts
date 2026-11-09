@@ -22,6 +22,11 @@ export function dezimal(eingabe: string) {
   return eingabe.includes(',') ? eingabe.replace(/\./g, '').replace(',', '.') : eingabe
 }
 
+// The API's "1234.56" -> "1234,56" for an input field; dezimal() converts it back on save.
+export function alsEingabe(wert: string | null) {
+  return wert === null ? '' : wert.replace('.', ',')
+}
+
 export function oderLeer(value: string | null) {
   return value || LEER
 }

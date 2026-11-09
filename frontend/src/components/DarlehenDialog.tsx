@@ -24,13 +24,13 @@ import TabellenContainer, { DatumZelle } from './Tabelle'
 import Laden, { Ladefehler } from './Laden'
 import { DIALOG_FORMULAR, useVollbild } from './dialog'
 import { useMeldung } from './meldung'
-import { dezimal, formatEuro, LEER } from '../format'
+import { alsEingabe, dezimal, formatEuro, LEER } from '../format'
 
 type Feld = 'bank' | 'iban' | 'beginn' | 'betrag' | 'art' | 'zinsbindung_bis' | 'sollzins' | 'tilgung'
 
-// "1.850" -> "1.85": percentages with up to 3 decimals, without trailing zeros.
+// "1.850" -> "1,85": percentages with up to 3 decimals, without trailing zeros.
 function prozentEingabe(wert: string) {
-  return String(Number(wert))
+  return alsEingabe(String(Number(wert)))
 }
 
 // "2026-10-01" -> local Date, without time zone shifts.
@@ -54,7 +54,7 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
     bank: darlehen?.bank ?? '',
     iban: darlehen?.iban ?? '',
     beginn: darlehen?.beginn ?? '',
-    betrag: darlehen?.betrag ?? '',
+    betrag: alsEingabe(darlehen?.betrag ?? null),
     art: darlehen?.art ?? 'ANNUITAET',
     zinsbindung_bis: darlehen?.zinsbindung_bis ?? '',
     sollzins: darlehen ? prozentEingabe(darlehen.sollzins) : '',

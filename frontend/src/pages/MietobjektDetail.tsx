@@ -53,7 +53,7 @@ import LoeschenDialog from '../components/LoeschenDialog'
 import MietvertragDialog from '../components/MietvertragDialog'
 import { useMeldung } from '../components/meldung'
 import WegAnteilFeld from '../components/WegAnteilFeld'
-import { dezimal, formatDatum, formatEuro, heuteIso, laenderName } from '../format'
+import { alsEingabe, dezimal, formatDatum, formatEuro, heuteIso, laenderName } from '../format'
 
 type Feld = Exclude<keyof Mietobjekt, 'id'>
 type Fehler = Partial<Record<string, string[]>>
@@ -86,12 +86,25 @@ const ANZAHL_LABELS: Record<string, string> = {
   stellplatz: 'Stellplatz',
 }
 
+// What the Ausstattung fields accept; other keystrokes are ignored.
+// Zimmer: up to 99 with at most one decimal ("3,5"). The others: whole numbers up to 999.
+const ZIMMER_EINGABE = /^\d{0,2}([,.]\d?)?$/
+const ANZAHL_EINGABE = /^\d{0,3}$/
+
 function zuWert(feld: Feld, eingabe: string) {
+  // Zimmer may be a half number ("3,5"): a string like the decimals, converted on save.
+  if (feld === 'zimmer') return eingabe
   if (ANZAHL.includes(feld)) return eingabe === '' ? 0 : Number(eingabe)
   if (GANZZAHL_OPTIONAL.includes(feld)) return eingabe === '' ? null : Number(eingabe)
   // Decimals stay strings, as DRF sends them; empty dates and decimals become null.
   if (DEZIMAL.includes(feld) || feld === 'kaufdatum') return eingabe === '' ? null : eingabe
   return eingabe
+}
+
+// The API's values with a decimal comma, as the form shows and edits them.
+function alsFormular(m: Mietobjekt): Mietobjekt {
+  const dezimalfelder = Object.fromEntries(DEZIMAL.map((f) => [f, m[f] === null ? null : alsEingabe(m[f] as string)]))
+  return { ...m, ...dezimalfelder, zimmer: alsEingabe(m.zimmer) }
 }
 
 function Abschnitt({ titel, children }: { titel: string; children: ReactNode }) {
@@ -166,8 +179,8 @@ function MietobjektFormular({
 }: FormularProps) {
   const meldung = useMeldung()
   const updateMietobjekt = useUpdateMietobjekt()
-  const [gespeichert, setGespeichert] = useState(mietobjekt)
-  const [werte, setWerte] = useState(mietobjekt)
+  const [gespeichert, setGespeichert] = useState(() => alsFormular(mietobjekt))
+  const [werte, setWerte] = useState(gespeichert)
   const [fehler, setFehler] = useState<Fehler>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()
   const [saving, setSaving] = useState(false)
@@ -181,19 +194,24 @@ function MietobjektFormular({
   }
 
   function feld(name: Feld) {
-    const ganzzahl = ANZAHL.includes(name) || GANZZAHL_OPTIONAL.includes(name)
+    const anzahl = ANZAHL.includes(name)
+    const muster = name === 'zimmer' ? ZIMMER_EINGABE : anzahl ? ANZAHL_EINGABE : undefined
     return {
       name,
       value: werte[name] ?? '',
-      onChange: (e: ChangeEvent<HTMLInputElement>) => setFeld(name, zuWert(name, e.target.value)),
+      onChange: (e: ChangeEvent<HTMLInputElement>) => {
+        if (muster && !muster.test(e.target.value)) return
+        setFeld(name, zuWert(name, e.target.value))
+      },
       error: !!fehler[name],
       helperText: fehler[name]?.join(' '),
       fullWidth: true,
       autoComplete: 'off',
-      ...(ganzzahl && { type: 'number' }),
+      ...(GANZZAHL_OPTIONAL.includes(name) && { type: 'number' }),
       // Text with a decimal keyboard, so "1234,56" can be typed; dezimal() converts it on save.
-      ...(DEZIMAL.includes(name) && { slotProps: { htmlInput: { inputMode: 'decimal' } } }),
-      ...(ANZAHL.includes(name) && { slotProps: { htmlInput: { min: 0 } } }),
+      ...((DEZIMAL.includes(name) || name === 'zimmer') && { slotProps: { htmlInput: { inputMode: 'decimal' } } }),
+      // Text, not type="number", which accepts "2,5" in some browsers: only digits get through, on a number keyboard.
+      ...(anzahl && name !== 'zimmer' && { slotProps: { htmlInput: { inputMode: 'numeric' } } }),
     }
   }
 
@@ -219,13 +237,14 @@ function MietobjektFormular({
       const daten = Object.fromEntries(
         geaendert.map((k) => {
           const wert = werte[k]
+          if (k === 'zimmer') return [k, dezimal(String(wert)) || '0']
           return [k, DEZIMAL.includes(k as Feld) && typeof wert === 'string' ? dezimal(wert) : wert]
         }),
       )
       const neu = await updateMietobjekt(mietobjekt.id, daten)
-      setGespeichert(neu)
+      setGespeichert(alsFormular(neu))
       onGespeichert()
-      setWerte(neu)
+      setWerte(alsFormular(neu))
       meldung('Gespeichert')
     } catch (e) {
       if (e instanceof ApiError && e.status === 400 && e.body && typeof e.body === 'object') {

@@ -65,6 +65,8 @@ class MietobjektSerializer(serializers.ModelSerializer):
     restschuld = serializers.SerializerMethodField()
     bodenrichtwert = serializers.SerializerMethodField()
     erwirtschafteter_betrag = serializers.SerializerMethodField()
+    # "3" and "3.5" instead of "3.0" and "3.5".
+    zimmer = serializers.DecimalField(max_digits=3, decimal_places=1, min_value=0, normalize_output=True, required=False)
 
     class Meta:
         model = Mietobjekt

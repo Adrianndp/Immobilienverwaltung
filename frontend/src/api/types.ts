@@ -73,7 +73,8 @@ export interface Mietobjekt {
   baujahr: number | null
   weg_anteil: string | null
   weg_nenner: WegNenner | null
-  zimmer: number
+  // Decimal, e.g. "3.5"; whole numbers come without decimals ("3").
+  zimmer: string
   baeder: number
   kueche: number
   balkon: number

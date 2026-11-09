@@ -154,7 +154,11 @@ class Darlehen(models.Model):
     monatsbetrag = models.DecimalField(max_digits=12, decimal_places=2)
 
     def tilgungsplan(self):
-        """Monthly {datum, zins, tilgung, rest}, first payment one month after beginn, until repaid (max. 600 months)."""
+        """Monthly {datum, zins, tilgung, sondertilgung, rest}, first payment one month after beginn,
+        until repaid (max. 600 months).
+
+        A Sondertilgung (a Zuordnung marked as such) is deducted after the first regular payment on or after
+        its buchungstag. The Rate stays the same, so the Darlehen is repaid earlier."""
 
         def runden(wert):
             return wert.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -165,23 +169,36 @@ class Darlehen(models.Model):
             # 31 Jan + 1 month -> 28/29 Feb
             return date(jahr, monat, min(tag.day, calendar.monthrange(jahr, monat)[1]))
 
+        sondertilgungen = list(
+            self.zuordnungen.filter(ist_sondertilgung=True)
+            .order_by("buchung__buchungstag")
+            .values_list("buchung__buchungstag", "betrag")
+        )
         rest = self.betrag
         plan = []
         for n in range(1, 601):
             if rest <= 0:
                 break
+            datum = plus_monate(self.beginn, n)
             zins = runden(rest * self.sollzins / 100 / 12)
             # Annuität: the Rate stays, the Tilgung grows as the Zins falls. Tilgungsdarlehen: the Tilgung stays.
             tilgung = self.monatsbetrag - zins if self.art == self.Art.ANNUITAET else self.monatsbetrag
             # The last payment only repays what is left.
             tilgung = min(tilgung, rest)
             rest -= tilgung
-            plan.append({"datum": plus_monate(self.beginn, n), "zins": zins, "tilgung": tilgung, "rest": rest})
+            sondertilgung = Decimal("0")
+            while sondertilgungen and sondertilgungen[0][0] <= datum:
+                sondertilgung += sondertilgungen.pop(0)[1]
+            # Never below 0: a Sondertilgung larger than the Restschuld only repays what is left.
+            sondertilgung = min(sondertilgung, rest)
+            rest -= sondertilgung
+            plan.append({"datum": datum, "zins": zins, "tilgung": tilgung, "sondertilgung": sondertilgung, "rest": rest})
         return plan
 
-    def restschuld(self, stichtag=None):
+    def restschuld(self, stichtag=None, plan=None):
+        """plan: an already computed tilgungsplan(), to save computing it again."""
         stichtag = stichtag or timezone.localdate()
-        bisher = [monat for monat in self.tilgungsplan() if monat["datum"] <= stichtag]
+        bisher = [monat for monat in (self.tilgungsplan() if plan is None else plan) if monat["datum"] <= stichtag]
         return bisher[-1]["rest"] if bisher else self.betrag
 
     def zinsen(self, von, bis):
@@ -282,3 +299,13 @@ class Zuordnung(models.Model):
     darlehen = models.ForeignKey(
         Darlehen, on_delete=models.PROTECT, null=True, blank=True, related_name="zuordnungen"
     )
+    # Lowers the Restschuld in Darlehen.tilgungsplan(); regular payments don't change the plan.
+    ist_sondertilgung = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(ist_sondertilgung=False) | models.Q(darlehen__isnull=False),
+                name="zuordnung_sondertilgung_nur_mit_darlehen",
+            )
+        ]

@@ -22,13 +22,15 @@ class DarlehenSerializer(serializers.ModelSerializer):
         return [{"datum": monat["datum"], "rest": str(monat["rest"])} for monat in obj.tilgungsplan()]
 
     def get_zahlungen(self, obj):
+        plan = obj.tilgungsplan()
         return [
             {
                 "datum": z.buchung.buchungstag,
                 "betrag": str(z.betrag),
                 "betreff": z.buchung.buchungstext,
                 "bank": z.buchung.kontoinhaber,
-                "kontostand": str(obj.restschuld(stichtag=z.buchung.buchungstag)),
+                "kontostand": str(obj.restschuld(stichtag=z.buchung.buchungstag, plan=plan)),
+                "ist_sondertilgung": z.ist_sondertilgung,
             }
             for z in obj.zuordnungen.select_related("buchung").order_by("buchung__buchungstag", "id")
         ]

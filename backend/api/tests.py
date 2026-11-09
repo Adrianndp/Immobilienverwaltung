@@ -56,8 +56,12 @@ class DarlehenTests(TestCase):
 
         # Zins 120000 * 3 % / 12 = 300, Tilgung = Rate 500 - Zins.
         self.assertEqual(
-            plan[0], {"datum": date(2026, 2, 1), "zins": D("300.00"), "tilgung": D("200.00"), "rest": D("119800.00")}
-        )
+            plan[0],
+            {
+                "datum": date(2026, 2, 1), "zins": D("300.00"), "tilgung": D("200.00"), "sondertilgung": D("0"),
+                "rest": D("119800.00"),
+            },
+        )  # fmt: skip
         self.assertTrue(all(m["zins"] + m["tilgung"] == D("500.00") for m in plan[:-1]))
         self.assertEqual(plan[-1]["rest"], 0)
 
@@ -84,6 +88,60 @@ class DarlehenTests(TestCase):
 
         self.assertEqual(rest(Darlehen.Art.TILGUNG, "524.79"), D("150690.33"))
         self.assertEqual(rest(Darlehen.Art.ANNUITAET, "649.22"), D("149767.72"))
+
+    def test_sondertilgung_senkt_restschuld_und_verkuerzt_laufzeit(self):
+        d = Darlehen.objects.create(
+            mietobjekt=self.objekt, bank="Testbank", iban="DE00", beginn=date(2020, 10, 1),
+            betrag=D("189000"), art=Darlehen.Art.ANNUITAET, sollzins=D("0.79"), monatsbetrag=D("649.22"),
+        )  # fmt: skip
+
+        def zahlung(betrag, tag, ist_sondertilgung):
+            buchung = Buchung.objects.create(
+                eigentuemer=self.objekt.eigentuemer, buchungstag=tag, wertstellung=tag, kontoinhaber="Testbank",
+                buchungstext="Test", buchungsart="Überweisung", betrag=-D(betrag),
+            )  # fmt: skip
+            Zuordnung.objects.create(buchung=buchung, betrag=D(betrag), darlehen=d, ist_sondertilgung=ist_sondertilgung)
+
+        ohne = d.tilgungsplan()
+        # A regular payment without the Haken doesn't change the plan.
+        zahlung("649.22", date(2023, 6, 1), False)
+        self.assertEqual(d.tilgungsplan(), ohne)
+
+        zahlung("10000", date(2023, 5, 15), True)
+        mit = d.tilgungsplan()
+
+        def rest(plan, tag):
+            return d.restschuld(stichtag=tag, plan=plan)
+
+        def zinsen(plan, bis):
+            return sum(m["zins"] for m in plan if m["datum"] <= bis)
+
+        # Deducted with the June payment: May is unchanged, June exactly 10.000 € lower.
+        self.assertEqual(rest(mit, date(2023, 5, 31)), rest(ohne, date(2023, 5, 31)))
+        self.assertEqual(rest(ohne, date(2023, 6, 1)) - rest(mit, date(2023, 6, 1)), D("10000"))
+        self.assertEqual([(m["datum"], m["sondertilgung"]) for m in mit if m["sondertilgung"]], [(date(2023, 6, 1), D("10000"))])
+        # Later 10.000 € plus the Zinsen saved since then: the Rate stays, so they go into the Tilgung.
+        stichtag = date(2026, 11, 9)
+        gespart = zinsen(ohne, stichtag) - zinsen(mit, stichtag)
+        self.assertGreater(gespart, 0)
+        self.assertEqual(rest(ohne, stichtag) - rest(mit, stichtag), D("10000") + gespart)
+        self.assertTrue(all(m["zins"] + m["tilgung"] == D("649.22") for m in mit[:-1]))
+        # Repaid earlier.
+        self.assertLess(len(mit), len(ohne))
+        self.assertEqual(mit[-1]["rest"], 0)
+
+    def test_sondertilgung_nicht_unter_null(self):
+        d = darlehen(self.objekt)
+        buchung = Buchung.objects.create(
+            eigentuemer=self.objekt.eigentuemer, buchungstag=date(2026, 1, 15), wertstellung=date(2026, 1, 15),
+            kontoinhaber="Testbank", buchungstext="Test", buchungsart="Überweisung", betrag=D("-200000"),
+        )  # fmt: skip
+        Zuordnung.objects.create(buchung=buchung, betrag=D("200000"), darlehen=d, ist_sondertilgung=True)
+        plan = d.tilgungsplan()
+
+        self.assertEqual(len(plan), 1)
+        self.assertEqual(plan[0]["sondertilgung"], D("119800.00"))
+        self.assertEqual(plan[0]["rest"], 0)
 
     def test_restschuld_und_zinsen(self):
         d = darlehen(self.objekt)
@@ -173,6 +231,21 @@ class BuchungTests(ApiTestCase):
         r = self.zuordnen(self.buchung("400"), betrag="400", rechnung=self.rechnung.id)
 
         self.assertEqual(r.status_code, 400)
+
+    def test_sondertilgung_nur_bei_darlehen(self):
+        r = self.zuordnen(self.buchung("-400"), betrag="400", rechnung=self.rechnung.id, ist_sondertilgung=True)
+
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("ist_sondertilgung", r.json()["zuordnungen"]["0"])
+
+    def test_sondertilgung_erscheint_in_den_zahlungen(self):
+        d = darlehen(self.objekt)
+        r = self.zuordnen(self.buchung("-5000"), betrag="5000", darlehen=d.id, ist_sondertilgung=True)
+
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["zuordnungen"][0]["ist_sondertilgung"])
+        zahlungen = self.client.get(f"/api/darlehen/{d.id}/").json()["zahlungen"]
+        self.assertTrue(zahlungen[0]["ist_sondertilgung"])
 
     def test_zuordnungen_duerfen_nicht_hoeher_als_buchung_sein(self):
         r = self.zuordnen(self.buchung("-100"), betrag="150", rechnung=self.rechnung.id)

@@ -1,6 +1,7 @@
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -226,7 +227,12 @@ function DarlehenFormular({ mietobjekt, darlehen, onClose, onSaved }: FormularPr
                       <TableRow key={i}>
                         <DatumZelle wert={z.datum} />
                         <TableCell align="right">{formatEuro(z.betrag, 2)}</TableCell>
-                        <TableCell>{z.betreff}</TableCell>
+                        <TableCell>
+                          {z.betreff}
+                          {z.ist_sondertilgung && (
+                            <Chip label="Sondertilgung" size="small" color="primary" sx={{ ml: 1 }} />
+                          )}
+                        </TableCell>
                         <TableCell>{z.bank}</TableCell>
                         <TableCell align="right">{formatEuro(z.kontostand, 2)}</TableCell>
                       </TableRow>

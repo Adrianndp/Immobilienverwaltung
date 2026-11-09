@@ -272,6 +272,8 @@ export interface Zuordnung {
   mietvertrag: number | null
   rechnung: number | null
   darlehen: number | null
+  // Only with a darlehen: lowers its Restschuld in the Tilgungsplan.
+  ist_sondertilgung: boolean
 }
 
 export interface Buchung {
@@ -343,7 +345,14 @@ export interface Darlehen {
   monatsbetrag: string
   restschuld: string
   verlauf: { datum: string; rest: string }[]
-  zahlungen: { datum: string; betrag: string; betreff: string; bank: string; kontostand: string }[]
+  zahlungen: {
+    datum: string
+    betrag: string
+    betreff: string
+    bank: string
+    kontostand: string
+    ist_sondertilgung: boolean
+  }[]
 }
 
 export type DarlehenInput = Pick<

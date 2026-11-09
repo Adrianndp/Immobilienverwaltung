@@ -1,10 +1,12 @@
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Checkbox from '@mui/material/Checkbox'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import FormHelperText from '@mui/material/FormHelperText'
 import IconButton from '@mui/material/IconButton'
 import ListSubheader from '@mui/material/ListSubheader'
@@ -30,6 +32,8 @@ interface ZuordnungsZeile {
   // "rechnung:5": an outgoing Buchung can go to a Rechnung or a Darlehen, so the Select value names both.
   ziel: string
   betrag: string
+  // Only shown and sent for a Darlehen.
+  sondertilgung: boolean
 }
 
 function zielVon(z: Zuordnung) {
@@ -60,8 +64,12 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
   const betragAbs = buchung.betrag.replace('-', '')
   const [zeilen, setZeilen] = useState<ZuordnungsZeile[]>(
     buchung.zuordnungen.length
-      ? buchung.zuordnungen.map((z) => ({ ziel: zielVon(z), betrag: alsEingabe(z.betrag) }))
-      : [{ ziel: '', betrag: alsEingabe(betragAbs) }],
+      ? buchung.zuordnungen.map((z) => ({
+          ziel: zielVon(z),
+          betrag: alsEingabe(z.betrag),
+          sondertilgung: z.ist_sondertilgung,
+        }))
+      : [{ ziel: '', betrag: alsEingabe(betragAbs), sondertilgung: false }],
   )
   const [fehler, setFehler] = useState<Record<string, string>>({})
   const [allgemeinerFehler, setAllgemeinerFehler] = useState<string>()
@@ -111,6 +119,7 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
             mietvertrag: feld === 'mietvertrag' ? Number(id) : null,
             rechnung: feld === 'rechnung' ? Number(id) : null,
             darlehen: feld === 'darlehen' ? Number(id) : null,
+            ist_sondertilgung: feld === 'darlehen' && z.sondertilgung,
           }
         }),
       )
@@ -184,6 +193,19 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
                       slotProps={{ htmlInput: { inputMode: 'decimal' } }}
                       sx={{ width: 160, flexShrink: 0 }}
                     />
+                    {feld === 'darlehen' && (
+                      <FormControlLabel
+                        label="Sondertilgung"
+                        control={
+                          <Checkbox
+                            checked={z.sondertilgung}
+                            onChange={(e) => setZeile(i, { sondertilgung: e.target.checked })}
+                          />
+                        }
+                        // Centered on the 56px high inputs.
+                        sx={{ mt: 1, flexShrink: 0 }}
+                      />
+                    )}
                     <IconButton
                       aria-label="Zuordnung entfernen"
                       onClick={() => setZeilen((liste) => liste.filter((_, j) => j !== i))}
@@ -199,7 +221,7 @@ function BuchungZuordnenDialog({ buchung, onClose, onSaved }: Props) {
                 useFlexGap
                 sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}
               >
-                <Button startIcon={<AddIcon />} onClick={() => setZeilen((liste) => [...liste, { ziel: '', betrag: '' }])}>
+                <Button startIcon={<AddIcon />} onClick={() => setZeilen((liste) => [...liste, { ziel: '', betrag: '', sondertilgung: false }])}>
                   Zuordnung hinzufügen
                 </Button>
                 <Typography color={offenCent < 0 ? 'error' : 'text.primary'}>

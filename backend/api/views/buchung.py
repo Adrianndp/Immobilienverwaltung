@@ -15,7 +15,7 @@ from .rechnung import lieferant_name
 class ZuordnungSerializer(serializers.ModelSerializer):
     class Meta:
         model = Zuordnung
-        fields = ["betrag", "mietvertrag", "rechnung", "darlehen"]
+        fields = ["betrag", "mietvertrag", "rechnung", "darlehen", "ist_sondertilgung"]
 
     def validate_betrag(self, value):
         if value <= 0:
@@ -41,6 +41,8 @@ class ZuordnungSerializer(serializers.ModelSerializer):
         ziele = [data.get(feld) for feld in ("mietvertrag", "rechnung", "darlehen")]
         if sum(ziel is not None for ziel in ziele) != 1:
             raise serializers.ValidationError("Genau einen Mietvertrag, eine Rechnung oder ein Darlehen angeben.")
+        if data.get("ist_sondertilgung") and data.get("darlehen") is None:
+            raise serializers.ValidationError({"ist_sondertilgung": "Nur Darlehen können eine Sondertilgung sein."})
         return data
 
 

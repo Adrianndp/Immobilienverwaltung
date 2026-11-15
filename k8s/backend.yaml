@@ -1,0 +1,69 @@
+# collectstatic output, shared with the nginx pod (like the compose "static" volume).
+# ReadWriteMany works on single-node minikube's hostpath provisioner.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: static
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources:
+    requests:
+      storage: 200Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      initContainers:
+        - name: migrate
+          image: immobilienverwaltung-backend:local
+          imagePullPolicy: Never
+          command: ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput"]
+          envFrom:
+            - configMapRef: {name: immobilienverwaltung-config}
+            - secretRef: {name: immobilienverwaltung-secrets}
+          volumeMounts:
+            - name: static
+              mountPath: /app/staticfiles
+      containers:
+        - name: backend
+          image: immobilienverwaltung-backend:local
+          imagePullPolicy: Never
+          command: ["gunicorn", "config.wsgi", "-b", "0.0.0.0:8000"]
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef: {name: immobilienverwaltung-config}
+            - secretRef: {name: immobilienverwaltung-secrets}
+          volumeMounts:
+            - name: static
+              mountPath: /app/staticfiles
+          # TCP check: an HTTP probe would be rejected by ALLOWED_HOSTS (pod IP as Host).
+          readinessProbe:
+            tcpSocket:
+              port: 8000
+            periodSeconds: 5
+      volumes:
+        - name: static
+          persistentVolumeClaim:
+            claimName: static

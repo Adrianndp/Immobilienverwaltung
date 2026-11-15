@@ -1,0 +1,15 @@
+# Non-secret settings. POSTGRES_PASSWORD and DJANGO_SECRET_KEY live in the
+# Secret "immobilienverwaltung-secrets", created by hand (see README).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: immobilienverwaltung-config
+data:
+  POSTGRES_DB: immobilienverwaltung
+  POSTGRES_USER: immobilienverwaltung
+  POSTGRES_HOST: db
+  POSTGRES_PORT: "5432"
+  DJANGO_DEBUG: "False"
+  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+  # The app is reached via `kubectl port-forward svc/frontend 8080:80`.
+  DJANGO_CSRF_TRUSTED_ORIGINS: http://localhost:8080

@@ -34,6 +34,8 @@ spec:
       labels:
         app: backend
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       initContainers:
         - name: migrate
           image: ghcr.io/adrianndp/immobilienverwaltung-backend:latest

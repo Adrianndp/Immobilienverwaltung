@@ -23,6 +23,8 @@ spec:
       labels:
         app: frontend
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: nginx
           image: ghcr.io/adrianndp/immobilienverwaltung-frontend:latest

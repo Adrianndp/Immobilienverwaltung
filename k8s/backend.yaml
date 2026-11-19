@@ -36,8 +36,8 @@ spec:
     spec:
       initContainers:
         - name: migrate
-          image: immobilienverwaltung-backend:local
-          imagePullPolicy: Never
+          image: ghcr.io/adrianndp/immobilienverwaltung-backend:latest
+          imagePullPolicy: Always
           command: ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput"]
           envFrom:
             - configMapRef: {name: immobilienverwaltung-config}
@@ -47,8 +47,8 @@ spec:
               mountPath: /app/staticfiles
       containers:
         - name: backend
-          image: immobilienverwaltung-backend:local
-          imagePullPolicy: Never
+          image: ghcr.io/adrianndp/immobilienverwaltung-backend:latest
+          imagePullPolicy: Always
           command: ["gunicorn", "config.wsgi", "-b", "0.0.0.0:8000"]
           ports:
             - containerPort: 8000

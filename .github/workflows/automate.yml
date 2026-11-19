@@ -90,7 +90,9 @@ jobs:
             file: ${{ matrix.dockerfile }}
             push: true
             # ghcr.io needs lowercase names.
-            tags: ghcr.io/adrianndp/immobilienverwaltung-${{ matrix.name }}:${{ github.sha }}
+            tags: |
+              ghcr.io/adrianndp/immobilienverwaltung-${{ matrix.name }}:${{ github.sha }}
+              ghcr.io/adrianndp/immobilienverwaltung-${{ matrix.name }}:latest
 
     # Disabled: the Hetzner server is shut down. The app now runs on a local
     # minikube cluster (see k8s/ and README), which GitHub Actions can't reach.

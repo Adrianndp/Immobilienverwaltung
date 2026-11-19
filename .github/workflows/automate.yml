@@ -94,6 +94,21 @@ jobs:
               ghcr.io/adrianndp/immobilienverwaltung-${{ matrix.name }}:${{ github.sha }}
               ghcr.io/adrianndp/immobilienverwaltung-${{ matrix.name }}:latest
 
+    cleanup:
+      needs: images
+      runs-on: ubuntu-latest
+      permissions:
+        packages: write
+      strategy:
+        matrix:
+          name: [backend, frontend]
+      steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: immobilienverwaltung-${{ matrix.name }}
+          package-type: container
+          min-versions-to-keep: 7
+
     # Disabled: the Hetzner server is shut down. The app now runs on a local
     # minikube cluster (see k8s/ and README), which GitHub Actions can't reach.
     # To re-enable, change `if` back to: github.event_name == 'push'

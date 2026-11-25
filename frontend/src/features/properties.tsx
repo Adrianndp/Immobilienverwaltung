@@ -44,6 +44,7 @@ import {
   dezimal,
   alsEingabe,
   formatProzent,
+  heuteIso,
 } from "@/format";
 import {
   ResponsiveContainer,
@@ -1013,7 +1014,7 @@ export function PropertyDetail({ id }: { id: number }) {
           ]}
           rows={(units.data ?? []).map((u) => {
             const c = (contracts.data ?? []).find(
-              (m) => m.einheit === u.id && (!m.ende || m.ende >= "2026-11-25"),
+              (m) => m.einheit === u.id && (!m.ende || m.ende >= heuteIso()),
             );
             return [
               u.name,

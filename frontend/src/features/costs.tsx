@@ -19,6 +19,7 @@ import {
   formatEuro as euro,
   formatDatum,
   formatProzent,
+  heuteIso,
   dezimal,
   lieferantName,
 } from "@/format";
@@ -81,8 +82,10 @@ export function Invoices() {
               { key: "betrag", label: "Betrag (€)", required: true },
             ]}
             initial={{
-              datum: "2026-11-25",
-              anteile: [{ mietobjekt: 1, prozent: "100" }],
+              datum: heuteIso(),
+              anteile: [
+                { mietobjekt: objects.data?.[0]?.id ?? "", prozent: "100" },
+              ],
             }}
             prepare={(d) => ({
               ...d,
@@ -187,7 +190,9 @@ export function Invoices() {
                                     !a.some(
                                       (x) => Number(x.mietobjekt) === o.id,
                                     ),
-                                )?.id ?? 1,
+                                )?.id ??
+                                objects.data?.[0]?.id ??
+                                "",
                               prozent: "0",
                             },
                           ],

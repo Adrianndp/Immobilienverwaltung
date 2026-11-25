@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Heading, Loading, DataTable } from "@/components/shared";
 import { useMietobjekte, useDeckungsbeitrag, useAnlageV } from "@/api/hooks";
 import { formatEuro as euro } from "@/format";
+
+const AKTUELLES_JAHR = new Date().getFullYear();
 import {
   ResponsiveContainer,
   PieChart,
@@ -14,9 +16,12 @@ import {
 } from "recharts";
 export function Analysis({ tax = false }: { tax?: boolean }) {
   const objects = useMietobjekte();
-  const [id, setId] = useState(1),
-    [year, setYear] = useState(2026),
+  // No object chosen yet: show the first one. Ids depend on the database, so
+  // there is no fixed default.
+  const [gewaehlt, setId] = useState<number>(),
+    [year, setYear] = useState(AKTUELLES_JAHR),
     [month, setMonth] = useState(0);
+  const id = gewaehlt ?? objects.data?.[0]?.id;
   return (
     <>
       <Heading
@@ -39,7 +44,7 @@ export function Analysis({ tax = false }: { tax?: boolean }) {
         <select
           aria-label="Mietobjekt"
           className="field-input !w-auto"
-          value={id}
+          value={id ?? ""}
           onChange={(e) => setId(Number(e.target.value))}
         >
           {(objects.data ?? []).map((o) => (
@@ -54,9 +59,11 @@ export function Analysis({ tax = false }: { tax?: boolean }) {
           value={year}
           onChange={(e) => setYear(Number(e.target.value))}
         >
-          {[2027, 2026, 2025, 2024, 2023, 2022].map((y) => (
-            <option key={y}>{y}</option>
-          ))}
+          {[1, 0, -1, -2, -3, -4]
+            .map((d) => AKTUELLES_JAHR + d)
+            .map((y) => (
+              <option key={y}>{y}</option>
+            ))}
         </select>
         {!tax && (
           <select
@@ -87,7 +94,13 @@ export function Analysis({ tax = false }: { tax?: boolean }) {
           </select>
         )}
       </div>
-      {tax ? (
+      {id === undefined ? (
+        <Loading result={objects}>
+          <div className="empty-state">
+            <p>Noch keine Mietobjekte angelegt.</p>
+          </div>
+        </Loading>
+      ) : tax ? (
         <TaxResult id={id} year={year} />
       ) : (
         <Contribution id={id} year={year} month={month} />

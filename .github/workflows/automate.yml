@@ -114,7 +114,7 @@ jobs:
     # To re-enable, change `if` back to: github.event_name == 'push'
     deploy:
         needs: [backend, frontend]
-        if: false
+        if: github.event_name == 'push'
         runs-on: ubuntu-latest
         steps:
         - name: Deploy via SSH

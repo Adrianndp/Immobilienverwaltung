@@ -63,6 +63,12 @@ export type Field = {
   options?: Record<string, string>;
   required?: boolean;
 };
+// The form is untyped at this boundary: it mixes text inputs, selects and row
+// lists (see `extra`), and `prepare` turns them into the API input, which the
+// save function (an API hook) checks against the serializer.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Untyped = any;
+export type FormValues = Record<string, Untyped>;
 export function Editor({
   title,
   fields,
@@ -75,15 +81,12 @@ export function Editor({
 }: {
   title: string;
   fields: Field[];
-  initial?: Record<string, any>;
-  save: (data: any) => Promise<unknown>;
+  initial?: FormValues;
+  save: (data: Untyped) => Promise<unknown>;
   onSaved: () => void;
   trigger?: ReactNode;
-  extra?: (
-    data: Record<string, any>,
-    set: (d: Record<string, any>) => void,
-  ) => ReactNode;
-  prepare?: (data: Record<string, any>) => any;
+  extra?: (data: FormValues, set: (d: FormValues) => void) => ReactNode;
+  prepare?: (data: FormValues) => Untyped;
 }) {
   const [open, setOpen] = useState(false),
     [data, setData] = useState(initial),

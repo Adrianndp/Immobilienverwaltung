@@ -12,6 +12,9 @@ import {
 } from "@/components/shared";
 import * as api from "@/api/hooks";
 import { KATEGORIE_LABELS, type Lieferant, type Rechnung } from "@/api/types";
+
+// One row of the invoice split: which property gets which share.
+type AnteilZeile = { mietobjekt: number | string; prozent: string };
 import {
   formatEuro as euro,
   formatDatum,
@@ -86,7 +89,7 @@ export function Invoices() {
               lieferant: Number(d["lieferant"]),
               kostenart: Number(d["kostenart"]),
               betrag: dezimal(d["betrag"]),
-              anteile: d["anteile"].map((a: any) => ({
+              anteile: d["anteile"].map((a: AnteilZeile) => ({
                 mietobjekt: Number(a.mietobjekt),
                 prozent: dezimal(a.prozent),
               })),
@@ -100,9 +103,9 @@ export function Invoices() {
               </Button>
             }
             extra={(d, set) => {
-              const a = d["anteile"] ?? [];
+              const a: AnteilZeile[] = d["anteile"] ?? [];
               const total = a.reduce(
-                (s: number, x: any) => s + Number(dezimal(x.prozent)),
+                (s, x) => s + Number(dezimal(x.prozent)),
                 0,
               );
               return (
@@ -119,7 +122,7 @@ export function Invoices() {
                       {total.toLocaleString("de-DE")} % / 100 %
                     </span>
                   </div>
-                  {a.map((x: any, i: number) => (
+                  {a.map((x, i) => (
                     <div className="flex gap-2 mb-2" key={i}>
                       <select
                         className="field-input"
@@ -127,7 +130,7 @@ export function Invoices() {
                         onChange={(e) =>
                           set({
                             ...d,
-                            anteile: a.map((r: any, j: number) =>
+                            anteile: a.map((r, j) =>
                               i === j
                                 ? { ...r, mietobjekt: e.target.value }
                                 : r,
@@ -148,7 +151,7 @@ export function Invoices() {
                         onChange={(e) =>
                           set({
                             ...d,
-                            anteile: a.map((r: any, j: number) =>
+                            anteile: a.map((r, j) =>
                               i === j ? { ...r, prozent: e.target.value } : r,
                             ),
                           })
@@ -160,9 +163,7 @@ export function Invoices() {
                         onClick={() =>
                           set({
                             ...d,
-                            anteile: a.filter(
-                              (_: unknown, j: number) => j !== i,
-                            ),
+                            anteile: a.filter((_, j) => j !== i),
                           })
                         }
                       >
@@ -184,7 +185,7 @@ export function Invoices() {
                                 (objects.data ?? []).find(
                                   (o) =>
                                     !a.some(
-                                      (x: any) => Number(x.mietobjekt) === o.id,
+                                      (x) => Number(x.mietobjekt) === o.id,
                                     ),
                                 )?.id ?? 1,
                               prozent: "0",
@@ -202,7 +203,7 @@ export function Invoices() {
                       onClick={() =>
                         set({
                           ...d,
-                          anteile: a.map((x: any, i: number) => ({
+                          anteile: a.map((x, i) => ({
                             ...x,
                             prozent: (i === a.length - 1
                               ? 100 -
@@ -515,7 +516,9 @@ export function VendorDetail({ id }: { id: number }) {
           {vendorFields.map((f) => (
             <div key={f.key}>
               <p className="text-xs text-muted-foreground">{f.label}</p>
-              <p className="text-sm mt-2">{(vendor as any)[f.key] || "–"}</p>
+              <p className="text-sm mt-2">
+                {vendor[f.key as keyof Lieferant] || "–"}
+              </p>
             </div>
           ))}
         </div>

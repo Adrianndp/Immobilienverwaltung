@@ -12,6 +12,13 @@ import * as api from "@/api/hooks";
 import { type Buchung } from "@/api/types";
 import { formatEuro as euro, formatDatum, dezimal } from "@/format";
 import { toast } from "sonner";
+// One row of the assignment form: target is "mietvertrag:<id>",
+// "rechnung:<id>" or "darlehen:<id>".
+type ZuordnungZeile = {
+  target: string;
+  betrag: string;
+  ist_sondertilgung: boolean;
+};
 function Assignment({
   booking,
   onSaved,
@@ -63,7 +70,7 @@ function Assignment({
         })),
       }}
       prepare={(d) =>
-        d["rows"].map((r: any) => {
+        d["rows"].map((r: ZuordnungZeile) => {
           const [type, id] = r.target.split(":");
           return {
             betrag: dezimal(r.betrag),
@@ -79,10 +86,10 @@ function Assignment({
       onSaved={onSaved}
       trigger={<Button variant="outline">Zuordnen</Button>}
       extra={(d, set) => {
-        const rows = d["rows"] ?? [];
+        const rows: ZuordnungZeile[] = d["rows"] ?? [];
         const rest =
           Math.abs(Number(booking.betrag)) -
-          rows.reduce((s: number, r: any) => s + Number(dezimal(r.betrag)), 0);
+          rows.reduce((s, r) => s + Number(dezimal(r.betrag)), 0);
         return (
           <>
             <div className="mb-5">
@@ -94,7 +101,7 @@ function Assignment({
                 {euro(booking.betrag, 2)}
               </p>
             </div>
-            {rows.map((r: any, i: number) => (
+            {rows.map((r, i) => (
               <div className="border rounded-md p-3 mb-3" key={i}>
                 <div className="flex gap-2">
                   <select
@@ -104,7 +111,7 @@ function Assignment({
                     onChange={(e) =>
                       set({
                         ...d,
-                        rows: rows.map((x: any, j: number) =>
+                        rows: rows.map((x, j) =>
                           i === j ? { ...x, target: e.target.value } : x,
                         ),
                       })
@@ -125,7 +132,7 @@ function Assignment({
                     onChange={(e) =>
                       set({
                         ...d,
-                        rows: rows.map((x: any, j: number) =>
+                        rows: rows.map((x, j) =>
                           i === j ? { ...x, betrag: e.target.value } : x,
                         ),
                       })
@@ -137,7 +144,7 @@ function Assignment({
                     onClick={() =>
                       set({
                         ...d,
-                        rows: rows.filter((_: unknown, j: number) => j !== i),
+                        rows: rows.filter((_, j) => j !== i),
                       })
                     }
                   >
@@ -152,7 +159,7 @@ function Assignment({
                       onChange={(e) =>
                         set({
                           ...d,
-                          rows: rows.map((x: any, j: number) =>
+                          rows: rows.map((x, j) =>
                             i === j
                               ? { ...x, ist_sondertilgung: e.target.checked }
                               : x,

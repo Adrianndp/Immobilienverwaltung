@@ -32,6 +32,8 @@ import {
   FARBE_LABELS,
   WEG_OBJEKTARTEN,
   DARLEHEN_ART_LABELS,
+  type AnschaffungskostenInput,
+  type Farbe,
   type Mietobjekt,
   type Mietvertrag,
   type MietvertragInput,
@@ -546,7 +548,10 @@ function FinanceDialogs({ id, reload }: { id: number; reload: () => void }) {
         title="Anschaffungskosten bearbeiten"
         fields={[]}
         initial={Object.fromEntries(
-          keys.map((k) => [k, alsEingabe((ac.data as any)?.[k] ?? "0.00")]),
+          keys.map((k) => [
+            k,
+            alsEingabe(ac.data?.[k as keyof AnschaffungskostenInput] ?? "0.00"),
+          ]),
         )}
         save={(d) => saveAc(id, d)}
         onSaved={() => {
@@ -780,6 +785,8 @@ export function PropertyDetail({ id }: { id: number }) {
     contracts.reload();
   };
   if (!obj) return <Loading result={result}>{null}</Loading>;
+  // The detail sections list their fields by name.
+  const werte = obj as unknown as Record<string, string | number | null>;
   return (
     <>
       <Button asChild variant="ghost" className="mb-4 -ml-3">
@@ -803,7 +810,7 @@ export function PropertyDetail({ id }: { id: number }) {
             title={l}
             data-color={v}
             onClick={async () => {
-              await update(id, { farbe: v as any });
+              await update(id, { farbe: v as Farbe });
               result.reload();
             }}
           >
@@ -903,8 +910,8 @@ export function PropertyDetail({ id }: { id: number }) {
                 s.keys.map((k) => [
                   k,
                   numberKeys.includes(k)
-                    ? alsEingabe((obj as any)[k])
-                    : ((obj as any)[k] ?? ""),
+                    ? alsEingabe(werte[k] as string | null)
+                    : (werte[k] ?? ""),
                 ]),
               )}
               prepare={(d) =>
@@ -970,10 +977,10 @@ export function PropertyDetail({ id }: { id: number }) {
                     : k === "nutzung"
                       ? NUTZUNG_LABELS[obj.nutzung]
                       : ["kaufpreis", "marktwert", "grundschuld"].includes(k)
-                        ? euro((obj as any)[k])
+                        ? euro(werte[k] as string | null)
                         : k === "kaufdatum"
                           ? formatDatum(obj.kaufdatum)
-                          : String((obj as any)[k] ?? "–")}
+                          : String(werte[k] ?? "–")}
                 </dd>
               </div>
             ))}

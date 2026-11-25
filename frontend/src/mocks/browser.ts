@@ -10,7 +10,7 @@ import {
   analysis,
   type Row,
 } from "./store";
-import { vertragsStatus } from "@/api/types";
+import { vertragsStatus, type Mietvertrag } from "@/api/types";
 import { heuteIso } from "@/format";
 let session = !document.cookie.includes("demo_session=out");
 export const worker = setupWorker(
@@ -206,7 +206,7 @@ export const worker = setupWorker(
       if (resource === "mietvertraege" && url.searchParams.has("status"))
         rows = rows.filter(
           (r) =>
-            vertragsStatus(r as any, heuteIso()) ===
+            vertragsStatus(r as Mietvertrag, heuteIso()) ===
             url.searchParams.get("status"),
         );
       if (resource === "bodenrichtwerte")

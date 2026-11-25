@@ -1,5 +1,7 @@
-import { vertragsStatus, KATEGORIE_LABELS } from "@/api/types";
+import { vertragsStatus, KATEGORIE_LABELS, type Lieferant } from "@/api/types";
 import { heuteIso, lieferantName } from "@/format";
+// Rows are untyped JSON, like the API responses they stand in for.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Row = Record<string, any>;
 const money = (n: number) => n.toFixed(2);
 const base = {
@@ -472,7 +474,9 @@ export function decorate(resource: string, r: Row): Row {
     );
     return {
       ...r,
-      lieferant_name: lieferantName(find("lieferanten", r["lieferant"]) as any),
+      lieferant_name: lieferantName(
+        find("lieferanten", r["lieferant"]) as Lieferant,
+      ),
       kostenart_name: find("kostenarten", r["kostenart"])?.["name"],
       anteile: r["anteile"].map((a: Row) => ({
         ...a,

@@ -43,6 +43,8 @@ class Mietobjekt(models.Model):
     eigentuemer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     farbe = models.CharField(max_length=7, choices=Farbe.choices, default=Farbe.BLAU)
+    # URL of a photo served by the frontend, e.g. "/images/property-0.webp"; empty = no photo.
+    bild = models.CharField(max_length=200, blank=True)
     strasse = models.CharField(max_length=100)
     hausnummer = models.CharField(max_length=10)
     plz = models.CharField(max_length=5)

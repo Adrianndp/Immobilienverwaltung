@@ -1,8 +1,6 @@
 buchungstag,wertstellung,kontoinhaber,buchungstext,buchungsart,betrag
-2026-10-01,2026-10-01,Anna Schmidt,Miete Oktober Lindenstraße 12a,Überweisung,1130.00
-2026-10-01,2026-10-01,Mehmet und Ayşe Yılmaz,Miete 10/2026 Whg EG links,Überweisung,930.00
-2026-10-02,2026-10-02,Julia Becker,Miete Oktober Gartenweg 5,Überweisung,880.00
-2026-10-02,2026-10-02,Lea Fischer,Miete Oktober WG Zimmer 1,Überweisung,510.00
-2026-10-05,2026-10-05,Jonas Klein,Miete Okt Kreuzstr. 31,Überweisung,480.00
-2026-10-06,2026-10-07,Sanitär Huber GmbH,Rechnung 2026-0915 Reparatur Heizung Gartenweg 5,Überweisung,-412.50
+2026-10-01,2026-10-01,Anna Schmidt,Miete Oktober Kollwitzstraße 42,Überweisung,1460.00
+2026-10-01,2026-10-01,Mehmet und Ayşe Yılmaz,Miete 10/2026 Whg EG links,Überweisung,1410.00
+2026-10-02,2026-10-02,Julia Becker,Miete Oktober Osterstraße 76,Überweisung,1340.00
+2026-10-06,2026-10-07,Sanitär Huber GmbH,Rechnung 2026-0915 Reparatur Heizung Osterstraße 76,Überweisung,-412.50
 2026-10-15,2026-10-15,Telekom Deutschland GmbH,Kundennr. 4711081512 MagentaZuhause M,Lastschrift,-29.99

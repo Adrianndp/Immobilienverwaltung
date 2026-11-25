@@ -1,4 +1,4 @@
-import { apiRequest, apiUpload, useApi } from './client'
+import { apiRequest, apiUpload, useApi } from "./client";
 import type {
   AnlageV,
   Anschaffungskosten,
@@ -28,176 +28,202 @@ import type {
   Rechnung,
   RechnungInput,
   Zuordnung,
-} from './types'
+} from "./types";
 
 // Also sets the CSRF cookie that useAnmelden needs.
 export function useAnmeldestatus() {
-  return useApi<Anmeldestatus>('/auth/anmelden/')
+  return useApi<Anmeldestatus>("/auth/anmelden/");
 }
 
 export function useAnmelden() {
-  return (daten: Anmeldedaten) => apiRequest<Benutzer>('POST', '/auth/anmelden/', daten)
+  return (daten: Anmeldedaten) =>
+    apiRequest<Benutzer>("POST", "/auth/anmelden/", daten);
 }
 
 export function useAbmelden() {
-  return () => apiRequest<void>('POST', '/auth/abmelden/')
+  return () => apiRequest<void>("POST", "/auth/abmelden/");
 }
 
 export function useBenutzer() {
-  return useApi<Benutzer>('/benutzer/')
+  return useApi<Benutzer>("/benutzer/");
 }
 
 export function useMietobjekte() {
-  return useApi<Mietobjekt[]>('/mietobjekte/')
+  return useApi<Mietobjekt[]>("/mietobjekte/");
 }
 
 export function useMietobjekt(id: number) {
-  return useApi<Mietobjekt>(`/mietobjekte/${id}/`)
+  return useApi<Mietobjekt>(`/mietobjekte/${id}/`);
 }
 
 export function useEinheiten(mietobjektId?: number) {
-  const query = mietobjektId === undefined ? '' : `?mietobjekt=${mietobjektId}`
-  return useApi<Einheit[]>(`/einheiten/${query}`)
+  const query = mietobjektId === undefined ? "" : `?mietobjekt=${mietobjektId}`;
+  return useApi<Einheit[]>(`/einheiten/${query}`);
 }
 
 export function useCreateMietobjekt() {
-  return (data: MietobjektInput) => apiRequest<Mietobjekt>('POST', '/mietobjekte/', data)
+  return (data: MietobjektInput) =>
+    apiRequest<Mietobjekt>("POST", "/mietobjekte/", data);
 }
 
 export function useUpdateMietobjekt() {
   return (id: number, data: Partial<MietobjektInput>) =>
-    apiRequest<Mietobjekt>('PATCH', `/mietobjekte/${id}/`, data)
+    apiRequest<Mietobjekt>("PATCH", `/mietobjekte/${id}/`, data);
 }
 
 // Zeros if none were entered yet.
 export function useAnschaffungskosten(mietobjektId: number) {
-  return useApi<Anschaffungskosten>(`/mietobjekte/${mietobjektId}/anschaffungskosten/`)
+  return useApi<Anschaffungskosten>(
+    `/mietobjekte/${mietobjektId}/anschaffungskosten/`,
+  );
 }
 
 // Also saves the Mietobjekt's kaufpreis.
 export function useUpdateAnschaffungskosten() {
   return (mietobjektId: number, data: AnschaffungskostenInput) =>
-    apiRequest<Anschaffungskosten>('PUT', `/mietobjekte/${mietobjektId}/anschaffungskosten/`, data)
+    apiRequest<Anschaffungskosten>(
+      "PUT",
+      `/mietobjekte/${mietobjektId}/anschaffungskosten/`,
+      data,
+    );
 }
 
 export function useCreateEinheit() {
-  return (data: EinheitInput) => apiRequest<Einheit>('POST', '/einheiten/', data)
+  return (data: EinheitInput) =>
+    apiRequest<Einheit>("POST", "/einheiten/", data);
 }
 
 export function useUpdateEinheit() {
-  return (id: number, data: Partial<EinheitInput>) => apiRequest<Einheit>('PATCH', `/einheiten/${id}/`, data)
+  return (id: number, data: Partial<EinheitInput>) =>
+    apiRequest<Einheit>("PATCH", `/einheiten/${id}/`, data);
 }
 
 export function useDeleteEinheit() {
-  return (id: number) => apiRequest<void>('DELETE', `/einheiten/${id}/`)
+  return (id: number) => apiRequest<void>("DELETE", `/einheiten/${id}/`);
 }
 
 // Without status: all Mietverträge.
 export function useMietvertraege(status?: MietvertragStatus) {
-  const query = status === undefined ? '' : `?status=${status}`
-  return useApi<Mietvertrag[]>(`/mietvertraege/${query}`)
+  const query = status === undefined ? "" : `?status=${status}`;
+  return useApi<Mietvertrag[]>(`/mietvertraege/${query}`);
 }
 
 export function useCreateMietvertrag() {
-  return (data: MietvertragInput) => apiRequest<Mietvertrag>('POST', '/mietvertraege/', data)
+  return (data: MietvertragInput) =>
+    apiRequest<Mietvertrag>("POST", "/mietvertraege/", data);
 }
 
 export function useUpdateMietvertrag() {
   return (id: number, data: Partial<MietvertragInput>) =>
-    apiRequest<Mietvertrag>('PATCH', `/mietvertraege/${id}/`, data)
+    apiRequest<Mietvertrag>("PATCH", `/mietvertraege/${id}/`, data);
 }
 
 export function useKostenarten() {
-  return useApi<Kostenart[]>('/kostenarten/')
+  return useApi<Kostenart[]>("/kostenarten/");
 }
 
 export function useCreateKostenart() {
-  return (data: KostenartInput) => apiRequest<Kostenart>('POST', '/kostenarten/', data)
+  return (data: KostenartInput) =>
+    apiRequest<Kostenart>("POST", "/kostenarten/", data);
 }
 
 export function useLieferanten() {
-  return useApi<Lieferant[]>('/lieferanten/')
+  return useApi<Lieferant[]>("/lieferanten/");
 }
 
 export function useLieferant(id: number) {
-  return useApi<Lieferant>(`/lieferanten/${id}/`)
+  return useApi<Lieferant>(`/lieferanten/${id}/`);
 }
 
 export function useCreateLieferant() {
-  return (data: LieferantInput) => apiRequest<Lieferant>('POST', '/lieferanten/', data)
+  return (data: LieferantInput) =>
+    apiRequest<Lieferant>("POST", "/lieferanten/", data);
 }
 
 export function useUpdateLieferant() {
   return (id: number, data: Partial<LieferantInput>) =>
-    apiRequest<Lieferant>('PATCH', `/lieferanten/${id}/`, data)
+    apiRequest<Lieferant>("PATCH", `/lieferanten/${id}/`, data);
 }
 
 export function useRechnungen(lieferantId?: number) {
-  const query = lieferantId === undefined ? '' : `?lieferant=${lieferantId}`
-  return useApi<Rechnung[]>(`/rechnungen/${query}`)
+  const query = lieferantId === undefined ? "" : `?lieferant=${lieferantId}`;
+  return useApi<Rechnung[]>(`/rechnungen/${query}`);
 }
 
 export function useCreateRechnung() {
-  return (data: RechnungInput) => apiRequest<Rechnung>('POST', '/rechnungen/', data)
+  return (data: RechnungInput) =>
+    apiRequest<Rechnung>("POST", "/rechnungen/", data);
 }
 
 export function useDeleteRechnung() {
-  return (id: number) => apiRequest<void>('DELETE', `/rechnungen/${id}/`)
+  return (id: number) => apiRequest<void>("DELETE", `/rechnungen/${id}/`);
 }
 
 export function useBuchungen() {
-  return useApi<Buchung[]>('/buchungen/')
+  return useApi<Buchung[]>("/buchungen/");
 }
 
 export function useImportBuchungen() {
   return (datei: File) => {
-    const data = new FormData()
-    data.append('datei', datei)
-    return apiUpload<BuchungImport>('/buchungen/import/', data)
-  }
+    const data = new FormData();
+    data.append("datei", datei);
+    return apiUpload<BuchungImport>("/buchungen/import/", data);
+  };
 }
 
 export function useAlleBuchungenLoeschen() {
-  return () => apiRequest<BuchungenGeloescht>('POST', '/buchungen/alle-loeschen/')
+  return () =>
+    apiRequest<BuchungenGeloescht>("POST", "/buchungen/alle-loeschen/");
 }
 
 export function useZuordnenBuchung() {
   return (id: number, zuordnungen: Zuordnung[]) =>
-    apiRequest<Buchung>('PATCH', `/buchungen/${id}/`, { zuordnungen })
+    apiRequest<Buchung>("PATCH", `/buchungen/${id}/`, { zuordnungen });
 }
 
-export function useDeckungsbeitrag(mietobjektId: number, jahr: number, monat?: number) {
-  const query = `?mietobjekt=${mietobjektId}&jahr=${jahr}${monat === undefined ? '' : `&monat=${monat}`}`
-  return useApi<Deckungsbeitrag>(`/auswertung/deckungsbeitrag/${query}`)
+export function useDeckungsbeitrag(
+  mietobjektId: number,
+  jahr: number,
+  monat?: number,
+) {
+  const query = `?mietobjekt=${mietobjektId}&jahr=${jahr}${monat === undefined ? "" : `&monat=${monat}`}`;
+  return useApi<Deckungsbeitrag>(`/auswertung/deckungsbeitrag/${query}`);
 }
 
 export function useAnlageV(mietobjektId: number, jahr: number) {
-  return useApi<AnlageV>(`/auswertung/anlage-v/?mietobjekt=${mietobjektId}&jahr=${jahr}`)
+  return useApi<AnlageV>(
+    `/auswertung/anlage-v/?mietobjekt=${mietobjektId}&jahr=${jahr}`,
+  );
 }
 
 // Without mietobjektId: all Darlehen.
 export function useDarlehen(mietobjektId?: number) {
-  const query = mietobjektId === undefined ? '' : `?mietobjekt=${mietobjektId}`
-  return useApi<Darlehen[]>(`/darlehen/${query}`)
+  const query = mietobjektId === undefined ? "" : `?mietobjekt=${mietobjektId}`;
+  return useApi<Darlehen[]>(`/darlehen/${query}`);
 }
 
 export function useCreateDarlehen() {
-  return (data: DarlehenInput) => apiRequest<Darlehen>('POST', '/darlehen/', data)
+  return (data: DarlehenInput) =>
+    apiRequest<Darlehen>("POST", "/darlehen/", data);
 }
 
 export function useUpdateDarlehen() {
-  return (id: number, data: Partial<DarlehenInput>) => apiRequest<Darlehen>('PATCH', `/darlehen/${id}/`, data)
+  return (id: number, data: Partial<DarlehenInput>) =>
+    apiRequest<Darlehen>("PATCH", `/darlehen/${id}/`, data);
 }
 
 // Newest first.
 export function useBodenrichtwerte(mietobjektId: number) {
-  return useApi<Bodenrichtwert[]>(`/bodenrichtwerte/?mietobjekt=${mietobjektId}`)
+  return useApi<Bodenrichtwert[]>(
+    `/bodenrichtwerte/?mietobjekt=${mietobjektId}`,
+  );
 }
 
 export function useCreateBodenrichtwert() {
-  return (data: BodenrichtwertInput) => apiRequest<Bodenrichtwert>('POST', '/bodenrichtwerte/', data)
+  return (data: BodenrichtwertInput) =>
+    apiRequest<Bodenrichtwert>("POST", "/bodenrichtwerte/", data);
 }
 
 export function useDeleteBodenrichtwert() {
-  return (id: number) => apiRequest<void>('DELETE', `/bodenrichtwerte/${id}/`)
+  return (id: number) => apiRequest<void>("DELETE", `/bodenrichtwerte/${id}/`);
 }

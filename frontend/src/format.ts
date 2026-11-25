@@ -1,59 +1,65 @@
-export const LEER = '–'
+export const LEER = "–";
 
-const laenderNamen = new Intl.DisplayNames('de-DE', { type: 'region' })
+const laenderNamen = new Intl.DisplayNames("de-DE", { type: "region" });
 
 // "DE" -> "Deutschland"; falls back to the code itself if it is not a known region.
 export function laenderName(code: string) {
   try {
-    return laenderNamen.of(code) ?? code
+    return laenderNamen.of(code) ?? code;
   } catch {
-    return code
+    return code;
   }
 }
 
 // Today in local time as "YYYY-MM-DD", comparable with the API's date strings.
 export function heuteIso() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // German input "1.234,56" or "1234,56" -> "1234.56" for the API; input with a dot stays as it is.
 export function dezimal(eingabe: string) {
-  return eingabe.includes(',') ? eingabe.replace(/\./g, '').replace(',', '.') : eingabe
+  return eingabe.includes(",")
+    ? eingabe.replace(/\./g, "").replace(",", ".")
+    : eingabe;
 }
 
 // The API's "1234.56" -> "1234,56" for an input field; dezimal() converts it back on save.
 export function alsEingabe(wert: string | null) {
-  return wert === null ? '' : wert.replace('.', ',')
+  return wert === null ? "" : wert.replace(".", ",");
 }
 
 export function oderLeer(value: string | null) {
-  return value || LEER
+  return value || LEER;
 }
 
 export function formatEuro(value: string | null, nachkommastellen = 0) {
-  if (value === null) return LEER
-  return Number(value).toLocaleString('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
+  if (value === null) return LEER;
+  return Number(value).toLocaleString("de-DE", {
+    style: "currency",
+    currency: "EUR",
     minimumFractionDigits: nachkommastellen,
     maximumFractionDigits: nachkommastellen,
-  })
+  });
 }
 
 // "80.00" -> "80 %", "33.50" -> "33,5 %"
 export function formatProzent(value: string) {
-  return `${Number(value).toLocaleString('de-DE')} %`
+  return `${Number(value).toLocaleString("de-DE")} %`;
 }
 
 // Lieferanten have either a firmenname or a person's name.
-export function lieferantName(l: { firmenname: string; vorname: string; nachname: string }) {
-  return l.firmenname || `${l.vorname} ${l.nachname}`.trim()
+export function lieferantName(l: {
+  firmenname: string;
+  vorname: string;
+  nachname: string;
+}) {
+  return l.firmenname || `${l.vorname} ${l.nachname}`.trim();
 }
 
 // "2024-03-15" -> "15.03.2024", without going through Date to avoid time zone shifts.
 export function formatDatum(value: string | null) {
-  if (!value) return LEER
-  const [jahr, monat, tag] = value.split('-')
-  return `${tag}.${monat}.${jahr}`
+  if (!value) return LEER;
+  const [jahr, monat, tag] = value.split("-");
+  return `${tag}.${monat}.${jahr}`;
 }

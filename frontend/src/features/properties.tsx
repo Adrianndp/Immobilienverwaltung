@@ -695,13 +695,23 @@ function FinanceDialogs({ id, reload }: { id: number; reload: () => void }) {
                       ...p,
                       rest: Number(p.rest),
                     }))}
+                    margin={CHART_MARGIN}
                   >
                     <XAxis
                       dataKey="datum"
-                      tickFormatter={(d) => d.slice(0, 4)}
+                      ticks={jahresTicks(loan.verlauf.map((p) => p.datum))}
+                      tickFormatter={(d: string) => d.slice(0, 4)}
+                      tick={CHART_TICK}
                     />
-                    <YAxis tickFormatter={(n) => `${n / 1000} Tsd.`} />
-                    <Tooltip formatter={(v) => euro(String(v))} />
+                    <YAxis
+                      width={84}
+                      tickFormatter={(n: number) => euro(String(n))}
+                      tick={CHART_TICK}
+                    />
+                    <Tooltip
+                      labelFormatter={(d) => formatDatum(String(d))}
+                      formatter={(v) => [euro(String(v)), "Restschuld"]}
+                    />
                     <Line dataKey="rest" stroke="var(--primary)" dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -757,10 +767,22 @@ function FinanceDialogs({ id, reload }: { id: number; reload: () => void }) {
                   data={[...(land.data ?? [])]
                     .reverse()
                     .map((b) => ({ ...b, wert: Number(b.wert) }))}
+                  margin={CHART_MARGIN}
                 >
-                  <XAxis dataKey="datum" />
-                  <YAxis />
-                  <Tooltip />
+                  <XAxis
+                    dataKey="datum"
+                    tickFormatter={(d: string) => formatDatum(d)}
+                    tick={CHART_TICK}
+                  />
+                  <YAxis
+                    width={84}
+                    tickFormatter={(n: number) => euro(String(n))}
+                    tick={CHART_TICK}
+                  />
+                  <Tooltip
+                    labelFormatter={(d) => formatDatum(String(d))}
+                    formatter={(v) => [euro(String(v), 2), "€ / m²"]}
+                  />
                   <Line dataKey="wert" stroke="var(--primary)" />
                 </LineChart>
               </ResponsiveContainer>
@@ -771,6 +793,21 @@ function FinanceDialogs({ id, reload }: { id: number; reload: () => void }) {
     </div>
   );
 }
+// Chart axes: small muted labels, with room at the top so the highest
+// Y label isn't cut off. Y labels are euro amounts; their non-breaking space
+// before "€" keeps them on one line.
+const CHART_MARGIN = { top: 12, right: 16, bottom: 0, left: 0 };
+const CHART_TICK = { fontSize: 12, fill: "var(--muted-foreground)" };
+
+// The schedule has one point per month. Put an X tick on January of every
+// n-th year, so the years are evenly spaced (at most about 8 labels).
+function jahresTicks(daten: string[]) {
+  const januare = daten.filter((d) => d.slice(5, 7) === "01");
+  if (januare.length === 0) return undefined;
+  const schritt = Math.max(1, Math.ceil(januare.length / 8));
+  return januare.filter((_, i) => i % schritt === 0);
+}
+
 export function PropertyDetail({ id }: { id: number }) {
   const result = api.useMietobjekt(id),
     units = api.useEinheiten(id),

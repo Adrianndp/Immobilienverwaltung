@@ -1,4 +1,6 @@
-Immobilienverwaltung für private Vermieter
+## Immobilienverwaltung für private Vermieter
+
+<img width="3681" height="1972" alt="Screenshot From 2026-11-25 21-31-48" src="https://github.com/user-attachments/assets/a341d27b-957d-4b12-bdb9-113e84fed135" />
 
 ## Kubernetes (minikube)
 
